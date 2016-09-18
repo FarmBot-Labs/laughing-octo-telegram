@@ -1,7 +1,9 @@
 use Mix.Config
 #import_config "#{Mix.Project.config[:target]}.exs"
 config :nerves, :firmware,
-  rootfs_additions: "config/rootfs-additions-#{Mix.Project.config[:target]}"
+  rootfs_additions: "config/rootfs-additions-#{Mix.Project.config[:target]}",
+  hardware: "rpi3",
+  ro_pat: "/root"
 
 config :bus,
   port: 1883,
@@ -16,5 +18,5 @@ config :uart,
   baud: 115200
 
 config :fb,
-  user: "admin@admin.com",
-  pass: "password123"
+  user: nil,
+  pass: nil

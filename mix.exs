@@ -1,7 +1,7 @@
 defmodule Fw.Mixfile do
   use Mix.Project
 
-  @target System.get_env("NERVES_TARGET") || "rpi2"
+  @target System.get_env("NERVES_TARGET") || "rpi3"
 
   def project do
     [app: :fw,
@@ -14,27 +14,58 @@ defmodule Fw.Mixfile do
      start_permanent: Mix.env == :prod,
      config_path: "config/config.exs",
      aliases: aliases,
-     deps: deps ++ system(@target)]
+     deps: deps ++ system(@target) ++ platform_deps(@target)]
   end
 
-  # Configuration for the OTP application.
-  #
-  # Type `mix help compile.app` for more information.
   def application do
     [mod: {Fw, []},
-     applications: [:logger, :nerves_networking, :nerves_interim_wifi, :nerves_firmware_http]]
+     applications: [:logger,
+                    :nerves,
+                    :nerves_firmware_http,
+                    :nerves_uart,
+                    :httpotion,
+                    :poison,
+                    # :bus,
+                    :gen_stage,
+                    :nerves_lib,
+                    :rsa,
+                    :cowboy,
+                    :plug,
+                    :cors_plug
+                    ] ++ platform_apps(@target) ]
   end
 
   def deps do
-    [{:nerves, "~> 0.3.0"},
+    [
+     {:nerves, "~> 0.3.0"},
      {:nerves_firmware_http, github: "nerves-project/nerves_firmware_http"},
-     {:nerves_networking, github: "nerves-project/nerves_networking"},
-     {:controller, path: "../elixir-poc"},
-     {:nerves_interim_wifi, github: "nerves-project/nerves_interim_wifi" }]
+     {:nerves_uart, "~> 0.1.0"},
+     {:httpotion, "~> 3.0.0"},
+     {:poison, "~> 2.0"},
+     {:bus, "~> 0.1.4"},
+     {:gen_stage, "~> 0.4"},
+     {:nerves_lib, github: "nerves-project/nerves_lib"},
+     {:rsa, "~> 0.0.1"},
+     {:cowboy, "~> 1.0.0"},
+     {:plug, "~> 1.0"},
+     {:cors_plug, "~> 1.1"}
+   ]
   end
 
   def system(target) do
     [{:"nerves_system_#{target}", ">= 0.0.0"}]
+  end
+
+  def platform_deps("rpi3") do
+    [
+      {:nerves_networking, github: "nerves-project/nerves_networking"},
+      {:nerves_interim_wifi, github: "nerves-project/nerves_interim_wifi" }
+    ]
+  end
+
+  def platform_apps("rpi3") do
+    [ :nerves_networking,
+      :nerves_interim_wifi]
   end
 
   def aliases do

@@ -1,7 +1,7 @@
 defmodule Network.Wifi do
 
   def init([]) do
-    Nerves.InterimWiFi.setup "wlan0", ssid: "#DicksOut4Harambe", key_mgmt: :"WPA-PSK", psk: "Gizmos123"
+    Nerves.InterimWiFi.setup "wlan0", ssid: "ssid", key_mgmt: :"WPA-PSK", psk: "super secret password"
   end
 
   def start_link() do

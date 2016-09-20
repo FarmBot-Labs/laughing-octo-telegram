@@ -14,7 +14,7 @@ GenServer status register for the bot. It holds the state of all the hardware.
 The handler for RPC commands. This will almost certainly need refactoring and probably an overhaul. It works as is but is awfully messy and makes calls to other modules breaking the model of [separation of concerns]("https://en.wikipedia.org/wiki/Separation_of_concerns") in many places. I AM SO SORRY FOR ANYONE WHO HAS TO DEAL WITH THAT
 
 ## mqtt
-Handles mqtt messages when logged in. Persists a small amount of state across reboots by storing a `secrets.txt` file on the readwrite partition of the system. Upon boot it checks if this file, if its not there it is assumed that the device needs a login from [setup](##setup) portion.
+Handles mqtt messages when logged in. Persists a small amount of state across reboots by storing a `secrets.txt` file on the readwrite partition of the system. Upon boot it checks if this file, if its not there it is assumed that the device needs a login from [setup](#setup) portion.
 
 ## sequence
 To be honest I made this module really late in the night a while back. I know some actions work. I don't know why. I don't know if it is correct. I don't know if it will stay here. There has been talk of putting the actions here into some other scripting language like Lua, Mruby, etc. TBD.
@@ -35,7 +35,7 @@ Currently it allows a login to a running farmbot server. This stores the token u
 TODO: I think I'm supposed to be checking the expiration date in the token?
 Work is currently in progress for network (yes WiFi) configuration.
 
- ### Initial Configuration Brain Dump
+ ## Initial Configuration Brain Dump
  I was working through the initial [Out of box experience]("https://en.wikipedia.org/wiki/Out-of-box_failure") and decided I'd write it down.
 
  I think the steps will go as such (from a fully assembled farmbot)
@@ -78,4 +78,4 @@ mix firmware # Compile application. Must do this every time code changes.
 * now plug your sdcard in, and run `mix firmware.burn; sudo sync`
 * You should now have a bootable elixir Farmbot.
   * There will be a console on the hardware/ftdi pins. If you want to change this look in `rootfs_additions` or just ask me. I don't know anyone who would want this yet.
-* Profit? Help? Break it? I don't know. 
+* Profit? Help? Break it? I don't know.

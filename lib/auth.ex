@@ -79,7 +79,7 @@ defmodule Auth do
     GenServer.call(__MODULE__, {:login, email,pass,server})
   end
 
-  def handle_call({:login, email,pass,server}, _from, old_token) do
+  def handle_call({:login, email,pass,server}, _from, _old_token) do
     secret = encrypt(email,pass,server)
     token = get_token(secret, server)
     {:reply,token,token}

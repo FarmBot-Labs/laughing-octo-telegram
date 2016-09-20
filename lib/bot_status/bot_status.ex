@@ -112,36 +112,13 @@ defmodule BotStatus do
     set_pos(x,y,z )
   end
 
+  def set_end_stop({stop, value}) do
+    #TODO
+    GenServer.cast(__MODULE__, {:set_end_stop, stop, value})
+  end
+
   # Get current coords
   def get_current_pos do
     [:X,:Y,:Z] |> Enum.map(fn(v) ->  Map.get(get_status, v) end)
-  end
-
-  def get_params do
-    %{  movement_axis_nr_steps_x: 222,
-        movement_axis_nr_steps_y: 222,
-        movement_axis_nr_steps_z: 222,
-        movement_home_up_x: 0,
-        movement_home_up_y: 0,
-        movement_home_up_z: 1,
-        movement_invert_endpoints_x: 0,
-        movement_invert_endpoints_y: 0,
-        movement_invert_endpoints_z: 0,
-        movement_invert_motor_x: 0,
-        movement_invert_motor_y: 0,
-        movement_invert_motor_z: 0,
-        movement_max_spd_x: 1500,
-        movement_max_spd_y: 1500,
-        movement_max_spd_z: 1500,
-        movement_min_spd_x: 50,
-        movement_min_spd_y: 50,
-        movement_min_spd_z: 50,
-        movement_steps_acc_dec_x: 500,
-        movement_steps_acc_dec_y: 500,
-        movement_steps_acc_dec_z: 500,
-        movement_timeout_x: 30,
-        movement_timeout_y: 30,
-        movement_timeout_z: 30,
-        param_version: 0 }
   end
 end

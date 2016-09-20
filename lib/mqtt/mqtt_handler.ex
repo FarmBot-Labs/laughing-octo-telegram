@@ -71,6 +71,7 @@ defmodule MqttHandler do
 
   def handle_cast({:disconnect, _message}, client) do
     Logger.debug("Disconnected. Trying to reconnect.")
+    Logger.debug("TODO: doesn't reconnect yet.")
     {:noreply,client }
   end
 
@@ -78,6 +79,7 @@ defmodule MqttHandler do
     {:noreply, client}
   end
 
+  # this needs to be error checked outside of this module.
   def handle_cast({:emit, message}, client) do
     options = [ id: 1234,
                 topic: "bot/#{bot}/response",
@@ -118,5 +120,10 @@ defmodule MqttHandler do
   def keep_connection_alive(pid) do
     # Logger.debug("I suck")
     Process.send_after(__MODULE__, {:keep_alive, pid}, 15000)
+  end
+
+  # I Don't actually know if this works
+  def emit(message) when is_bitstring(message) do
+    GenServer.cast(__MODULE__, {:emit, message})
   end
 end

@@ -46,8 +46,14 @@ defmodule GcodeMessageHandler do
   end
 
   # TODO report end stops
-  def do_handle({:gcode, {:reporting_end_stops, end_stops }}) do
-    Logger.debug("[gcode_handler] {:reporting_end_stops} stub: #{end_stops}")
+  def do_handle({:gcode, {:reporting_end_stops, params }}) do
+    Logger.debug("[gcode_handler] {:reporting_end_stops} stub: #{params}")
+    # "XA0 XB0 YA0 YB0 ZA0 ZB0"
+    stop_values = String.split(params, " ")
+    # ["XA0", "XB0", "YA0", "YB0", "ZA0", "ZB0"]
+    Enum.map(params, fn param -> String.split_at(param, 2) end) |>
+    # [{"XA", "0"}, {"XB", "0"}, {"YA", "0"}, {"YB", "0"}, {"ZA", "0"}, {"ZB", "0"}]
+    Enum.each(fn es -> BotStatus.set_end_stop(es) end)
   end
 
   # This needs more pattern matching. something like:

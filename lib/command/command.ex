@@ -59,7 +59,7 @@ defmodule Command do
     Logger.info("WRITE_PIN " <> "F41 P#{pin} V#{value} M#{mode}")
     SerialMessageManager.sync_notify( {:send, "F41 P#{pin} V#{value} M#{mode}"} )
     BotStatus.set_pin(pin, value)
-    read_status(id)
+    read_status(id, "single_command")
   end
 
   @doc """
@@ -70,25 +70,22 @@ defmodule Command do
     Logger.info("MOVE_ABSOLUTE " <> "G00 X#{x} Y#{y} Z#{z}")
     SerialMessageManager.sync_notify( {:send, "G00 X#{x} Y#{y} Z#{z}"} )
     BotStatus.set_pos(x,y,z)
-    read_status(id)
+    read_status(id, "single_command")
   end
 
   # When both x and y are negative
   def move_absolute(x, y, z, s,id ) when x < 0 and y < 0 do
-    move_absolute(0,0,z,s)
-    read_status(id)
+    move_absolute(0,0,z,s,id)
   end
 
   # when x is negative
   def move_absolute(x, y, z, s,id ) when x < 0 do
-    move_absolute(0,y,z,s)
-    read_status(id)
+    move_absolute(0,y,z,s,id)
   end
 
   # when y is negative
   def move_absolute(x, y, z, s, id ) when y < 0 do
-    move_absolute(x,0,z,s)
-    read_status(id)
+    move_absolute(x,0,z,s,id)
   end
 
   def move_relative(e, id \\ nil)
@@ -112,6 +109,7 @@ defmodule Command do
     spawn fn -> Enum.each(0..13, fn pin -> Command.read_pin(pin); Process.sleep 500 end) end
   end
 
+  # Stollen from rpi controller. Crashes on certain params for some reason? (1)
   def read_all_params do
     rel_params = [0,1,11,12,13,21,22,23,
                            31,32,33,41,42,43,51,52,53,
@@ -128,6 +126,9 @@ defmodule Command do
     id
   end
 
+  # I don't have this one read_status at the end because if mqtt not connected
+  # it would crash on every boot, until mqtt connects and it is just ugly,
+  # So i only read_status from the mqtt message handler.
   def update_param(param, value, id \\nil)
   def update_param(param, value, id) when is_integer param do
     Logger.debug(value)
@@ -136,13 +137,14 @@ defmodule Command do
     id
   end
 
-  def read_status(id \\ nil) do
+  def read_status(id \\ nil, method \\ "read_status")
+  def read_status(id, method) do
     current_status = BotStatus.get_status
     [x,y,z] = BotStatus.get_current_pos
     results = Map.merge(%{
       busy: 0,
       last: Map.get(current_status, :LAST),
-      method: "read_status",
+      method: method,
       s: Map.get(current_status, :S),
       x: x,
       y: y,
@@ -151,6 +153,7 @@ defmodule Command do
     message = %{error: nil,
                 id: id,
                 result: results}
-    GenServer.cast(MqttHandler, {:emit, Poison.encode!(message)} )
+    MqttHandler.emit( Poison.encode!(message) )
+    # GenServer.cast(MqttHandler, {:emit, Poison.encode!(message)} )
   end
 end

@@ -10,9 +10,6 @@ defmodule CommandMessageHandler do
   end
 
   def init(_args) do
-    # Bootstarp the bot here.
-    Command.read_all_pins
-    Command.read_all_params
     {:consumer, :ok, subscribe_to: [CommandMessageManager]}
   end
 
@@ -87,37 +84,46 @@ defmodule CommandMessageHandler do
 
   # ALLOW NEGATIVES (Juset realized i probs dont need this to be three seperate things)
   def do_handle(%{"id" => id, "method" => "update_calibration", "params" => %{"movement_home_up_x" => value}}) do
+    Logger.debug("update_calibration: movement_home_up_x: #{value}")
     Command.update_param(Gcode.parse_param(String.Casing.upcase("movement_home_up_x") |> String.to_atom),
-        value, id) |> Command.read_status end
+        value, id) |> Command.read_status("calibrate_axis") end
   def do_handle(%{"id" => id, "method" => "update_calibration", "params" => %{"movement_home_up_y" => value}}) do
+    Logger.debug("update_calibration: movement_home_up_y: #{value}")
     Command.update_param(Gcode.parse_param(String.Casing.upcase("movement_home_up_y") |> String.to_atom),
-        value, id) |> Command.read_status end
+        value, id) |> Command.read_status("calibrate_axis") end
   def do_handle(%{"id" => id, "method" => "update_calibration", "params" => %{"movement_home_up_z" => value}}) do
+    Logger.debug("update_calibration: movement_home_up_z: #{value}")
     Command.update_param(Gcode.parse_param(String.Casing.upcase("movement_home_up_z") |> String.to_atom),
-        value, id) |> Command.read_status end
+        value, id) |> Command.read_status("calibrate_axis") end
 
 
   # INVERT MOTORS
   def do_handle(%{"id" => id, "method" => "update_calibration", "params" => %{"movement_invert_motor_x" => value}}) do
+    Logger.debug("update_calibration: movement_invert_motor_x: #{value}")
     Command.update_param(Gcode.parse_param(String.Casing.upcase("movement_invert_motor_x") |> String.to_atom),
-        value, id) |> Command.read_status end
+        value, id) |> Command.read_status("calibrate_axis") end
   def do_handle(%{"id" => id, "method" => "update_calibration", "params" => %{"movement_invert_motor_y" => value}}) do
+    Logger.debug("update_calibration: movement_invert_motor_y: #{value}")
     Command.update_param(Gcode.parse_param(String.Casing.upcase("movement_invert_motor_y") |> String.to_atom),
-        value, id) |> Command.read_status end
+        value, id) |> Command.read_status("calibrate_axis") end
   def do_handle(%{"id" => id, "method" => "update_calibration", "params" => %{"movement_invert_motor_z" => value}}) do
+    Logger.debug("update_calibration: movement_invert_motor_z: #{value}")
     Command.update_param(Gcode.parse_param(String.Casing.upcase("movement_invert_motor_z") |> String.to_atom),
-        value, id) |> Command.read_status end
+        value, id) |> Command.read_status("calibrate_axis") end
 
   # INVERT ENDPOINTS
   def do_handle(%{"id" => id, "method" => "update_calibration", "params" => %{"movement_invert_endpoints_x" => value}}) do
+    Logger.debug("update_calibration: movement_invert_motor_x: #{value}")
     Command.update_param(Gcode.parse_param(String.Casing.upcase("movement_invert_motor_x") |> String.to_atom),
-        value, id) |> Command.read_status end
+        value, id) |> Command.read_status("calibrate_axis") end
   def do_handle(%{"id" => id, "method" => "update_calibration", "params" => %{"movement_invert_endpoints_y" => value}}) do
+    Logger.debug("update_calibration: movement_invert_motor_y: #{value}")
     Command.update_param(Gcode.parse_param(String.Casing.upcase("movement_invert_motor_y") |> String.to_atom),
-        value, id) |> Command.read_status end
+        value, id) |> Command.read_status("calibrate_axis") end
   def do_handle(%{"id" => id, "method" => "update_calibration", "params" => %{"movement_invert_endpoints_z" => value}}) do
+    Logger.debug("update_calibration: movement_invert_motor_z: #{value}")
     Command.update_param(Gcode.parse_param(String.Casing.upcase("movement_invert_motor_z") |> String.to_atom),
-        value, id) |> Command.read_status end
+        value, id) |> Command.read_status("calibrate_axis") end
 
   #TODO
   def do_handle(%{"id" => _id, "method" => "sync_sequence", "params" => _params}) do

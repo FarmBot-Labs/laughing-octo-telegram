@@ -2,10 +2,27 @@ defmodule UartHandler do
   require Logger
   @tty Application.get_env(:uart, :tty)
   @baud Application.get_env(:uart, :baud)
+
+  defp open_serial(_pid, [], tries) do
+    Logger.debug("Could not auto detect serial port.")
+    Logger.debug("I tried: #{inspect tries}")
+    Process.exit(self(), :kill)
+  end
+
+  defp open_serial(pid, ports, tries) do
+    [{tty, _ } | rest ] = ports
+    blah = Nerves.UART.open(pid, tty, speed: @baud, active: true)
+    case blah do
+      :ok -> blah
+      _ -> open_serial(pid, rest, tries ++ [tty])
+    end
+  end
+
   def init(_) do
-    active = true
     {:ok, pid} = Nerves.UART.start_link
-    Nerves.UART.open(pid, @tty, speed: @baud, active: active)
+    open_serial(pid, Nerves.UART.enumerate |>
+                     Map.drop(["ttyS0","ttyAMA0"]) |>
+                     Map.to_list, []) # List of available ports
     Nerves.UART.configure(pid, framing: {Nerves.UART.Framing.Line, separator: "\r\n"}, rx_framing_timeout: 500)
     {:ok, pid}
   end
@@ -39,6 +56,13 @@ defmodule UartHandler do
 
   def handle_cast({:send, str}, state) do
     Nerves.UART.write(state, str)
+    {:noreply, state}
+  end
+
+  def handle_info({:nerves_uart, "/dev/ttyACM0", {:error, _}}, state) do
+    ## TODO
+    Logger.debug("UART ERROR")
+    Logger.debug("TRY OTHER UARTS MAYBE?")
     {:noreply, state}
   end
 

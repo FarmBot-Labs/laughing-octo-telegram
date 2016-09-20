@@ -5,7 +5,9 @@ defmodule BotStatus do
     initial_status = %{X: 0, Y: 0, Z: 0, S: 10,
                        BUSY: true, LAST: "",
                        PINS: Map.new,
-                       PARAMS: Map.new }
+                       PARAMS: %{ movement_axis_nr_steps_x: 222,
+                                  movement_axis_nr_steps_y: 222,
+                                  movement_axis_nr_steps_z: 222 } }
     { :ok, initial_status }
   end
 
@@ -37,6 +39,12 @@ defmodule BotStatus do
     {:noreply, Map.update(current_status, :PINS, new_pin_status, fn _x -> new_pin_status end)}
   end
 
+  def handle_cast({:set_param, param, value}, current_status) do
+    current_params = Map.get(current_status, :PARAMS)
+    new_params = Map.put(current_params, param, value)
+    {:noreply, Map.update(current_status, :PARAMS, new_params, fn _x -> new_params end)}
+  end
+
   def handle_cast({:set_busy, b}, current_status ) when is_boolean b do
     {:noreply, Map.update(current_status, :BUSY, b, fn _x ->  b end)}
   end
@@ -58,6 +66,10 @@ defmodule BotStatus do
       0 -> GenServer.cast(__MODULE__, {:set_pin, "pin"<>Integer.to_string(pin), :off})
       _ -> GenServer.cast(__MODULE__, {:set_pin, "pin"<>Integer.to_string(pin), :on})
     end
+  end
+
+  def set_param(param, value) when is_bitstring param do
+    GenServer.cast(__MODULE__, {:set_pin, param, value})
   end
 
   # Gets the pin value from the bot's status

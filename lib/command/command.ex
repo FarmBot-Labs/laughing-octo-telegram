@@ -112,8 +112,28 @@ defmodule Command do
     spawn fn -> Enum.each(0..13, fn pin -> Command.read_pin(pin); Process.sleep 500 end) end
   end
 
+  def read_all_params do
+    rel_params = [0,1,11,12,13,21,22,23,
+                           31,32,33,41,42,43,51,52,53,
+                           61,62,63,71,72,73]
+    spawn fn -> Enum.each(rel_params, fn param -> Command.read_param(param); Process.sleep(500) end ) end
+  end
+
   def read_pin(pin, mode \\ 1) do
-    SerialMessageManager.sync_notify( {:send, "F42 P#{pin} M#{mode}" })
+    SerialMessageManager.sync_notify({:send, "F42 P#{pin} M#{mode}" })
+  end
+
+  def read_param(param, id \\nil) when is_integer param do
+    SerialMessageManager.sync_notify({:send, "F21 P#{param}" })
+    id
+  end
+
+  def update_param(param, value, id \\nil)
+  def update_param(param, value, id) when is_integer param do
+    Logger.debug(value)
+    SerialMessageManager.sync_notify({:send, "F22 P#{param} V#{value}"})
+    read_param(param)
+    id
   end
 
   def read_status(id \\ nil) do

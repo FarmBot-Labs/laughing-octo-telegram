@@ -13,6 +13,8 @@ defmodule MqttHandler do
     options = [id: 24_756, topics: ["bot/#{bot}/request"], qoses: [1]]
     Mqtt.Client.subscribe(client, options)
     keep_connection_alive(client)
+    Command.read_all_pins # I'm truly sorry these are here
+    Command.read_all_params
     {:noreply,client }
   end
 

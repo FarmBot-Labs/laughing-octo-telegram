@@ -12,6 +12,7 @@ defmodule CommandMessageHandler do
   def init(_args) do
     # Bootstarp the bot here.
     Command.read_all_pins
+    Command.read_all_params
     {:consumer, :ok, subscribe_to: [CommandMessageManager]}
   end
 
@@ -84,8 +85,43 @@ defmodule CommandMessageHandler do
     SequenceManager.sync_notify({:exec_sequence, steps, id})
   end
 
+  # ALLOW NEGATIVES (Juset realized i probs dont need this to be three seperate things)
+  def do_handle(%{"id" => id, "method" => "update_calibration", "params" => %{"movement_home_up_x" => value}}) do
+    Command.update_param(Gcode.parse_param(String.Casing.upcase("movement_home_up_x") |> String.to_atom),
+        value, id) |> Command.read_status end
+  def do_handle(%{"id" => id, "method" => "update_calibration", "params" => %{"movement_home_up_y" => value}}) do
+    Command.update_param(Gcode.parse_param(String.Casing.upcase("movement_home_up_y") |> String.to_atom),
+        value, id) |> Command.read_status end
+  def do_handle(%{"id" => id, "method" => "update_calibration", "params" => %{"movement_home_up_z" => value}}) do
+    Command.update_param(Gcode.parse_param(String.Casing.upcase("movement_home_up_z") |> String.to_atom),
+        value, id) |> Command.read_status end
+
+
+  # INVERT MOTORS
+  def do_handle(%{"id" => id, "method" => "update_calibration", "params" => %{"movement_invert_motor_x" => value}}) do
+    Command.update_param(Gcode.parse_param(String.Casing.upcase("movement_invert_motor_x") |> String.to_atom),
+        value, id) |> Command.read_status end
+  def do_handle(%{"id" => id, "method" => "update_calibration", "params" => %{"movement_invert_motor_y" => value}}) do
+    Command.update_param(Gcode.parse_param(String.Casing.upcase("movement_invert_motor_y") |> String.to_atom),
+        value, id) |> Command.read_status end
+  def do_handle(%{"id" => id, "method" => "update_calibration", "params" => %{"movement_invert_motor_z" => value}}) do
+    Command.update_param(Gcode.parse_param(String.Casing.upcase("movement_invert_motor_z") |> String.to_atom),
+        value, id) |> Command.read_status end
+
+  # INVERT ENDPOINTS
+  def do_handle(%{"id" => id, "method" => "update_calibration", "params" => %{"movement_invert_endpoints_x" => value}}) do
+    Command.update_param(Gcode.parse_param(String.Casing.upcase("movement_invert_motor_x") |> String.to_atom),
+        value, id) |> Command.read_status end
+  def do_handle(%{"id" => id, "method" => "update_calibration", "params" => %{"movement_invert_endpoints_y" => value}}) do
+    Command.update_param(Gcode.parse_param(String.Casing.upcase("movement_invert_motor_y") |> String.to_atom),
+        value, id) |> Command.read_status end
+  def do_handle(%{"id" => id, "method" => "update_calibration", "params" => %{"movement_invert_endpoints_z" => value}}) do
+    Command.update_param(Gcode.parse_param(String.Casing.upcase("movement_invert_motor_z") |> String.to_atom),
+        value, id) |> Command.read_status end
+
+  #TODO
   def do_handle(%{"id" => _id, "method" => "sync_sequence", "params" => _params}) do
-    Logger.debug("sync_sequence request. I don't know what this message is for?")
+    Logger.debug("TODO: sync_sequence request. I don't know what this message is for?")
   end
 
   # Unhandled event. Probably not implemented if it got this far.

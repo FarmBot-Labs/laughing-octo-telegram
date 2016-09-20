@@ -59,6 +59,16 @@ defmodule GcodeMessageHandler do
     BotStatus.set_pos(x,y,z)
   end
 
+  def do_handle({:gcode, {:report_parameter_value, param }}) do
+    Logger.debug("Params: #{inspect param}")
+    [p, v] = String.split(param, " ")
+    [_, real_p] = String.split(p, "P")
+    [_, real_v] = String.split(v, "V")
+    Logger.debug("Param: #{real_p}, Value: #{real_v}")
+    String.Casing.downcase(Atom.to_string(Gcode.parse_param(real_p) )) |>
+    BotStatus.set_param(real_v)
+  end
+
   # Serial sending a debug message. Print it.
   def do_handle({:gcode, {:debug_message, message}} ) do
     Logger.debug("Debug message from arduino: #{message}")

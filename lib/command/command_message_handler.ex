@@ -9,14 +9,15 @@ defmodule CommandMessageHandler do
     GenStage.start_link(__MODULE__, :ok)
   end
 
-  def init(:ok) do
+  def init(_args) do
     # Bootstarp the bot here.
-    spawn fn -> Enum.each(0..13, fn pin -> Command.read_pin(pin); Process.sleep 500 end) end
+    Command.read_all_pins
     {:consumer, :ok, subscribe_to: [CommandMessageManager]}
   end
 
   def handle_events(events, _from, state) do
     for event <- events do
+      # I don't know why I did this looking back.
       do_handle(event)
     end
     {:noreply, [], state}
@@ -89,6 +90,6 @@ defmodule CommandMessageHandler do
 
   # Unhandled event. Probably not implemented if it got this far.
   def do_handle(event) do
-    Logger.debug("[command_handler] (Probably not implemented) Unhandled Event: #{inspect event}")
+    Logger.debug("[RPC_HANDLER] (Probably not implemented) Unhandled Event: #{inspect event}")
   end
 end

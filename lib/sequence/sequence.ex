@@ -1,4 +1,7 @@
 defmodule Sequence do
+  @moduledoc """
+    LOL
+  """
   use GenServer
   require Logger
   require Kernel
@@ -22,13 +25,14 @@ defmodule Sequence do
     {:reply, steps, []}
   end
 
-  def handle_call({:execute}, _from, steps) do
+  def handle_call({:execute, id}, _from, steps) do
+    Command.read_status(id)
     pid = spawn fn -> Enum.each(steps, fn step -> Kernel.apply(step, []) end) end
     {:reply, pid, []}
   end
 
-  def execute do
-    GenServer.call(__MODULE__, {:execute})
+  def execute(id \\nil) do
+    GenServer.call(__MODULE__, {:execute, id})
   end
 
   # Pattern match available commands

@@ -2,7 +2,10 @@ defmodule BotStatus do
   use GenServer
   require Logger
   def init(_) do
-    initial_status = %{X: 0, Y: 0, Z: 0, S: 10, BUSY: true, LAST: "", PINS: Map.new, PARAMS: Map.new }
+    initial_status = %{X: 0, Y: 0, Z: 0, S: 10,
+                       BUSY: true, LAST: "",
+                       PINS: Map.new,
+                       PARAMS: Map.new }
     { :ok, initial_status }
   end
 
@@ -16,6 +19,10 @@ defmodule BotStatus do
 
   def handle_call({:get_status}, _from, status) do
     {:reply, status, status}
+  end
+
+  def handle_call({:get_busy}, _from, current_status )  do
+    {:reply, current_status.busy, current_status}
   end
 
   def handle_call({:get_pin, pin}, _from, status) do
@@ -58,8 +65,14 @@ defmodule BotStatus do
     GenServer.call(__MODULE__, {:get_pin, pin})
   end
 
+  # Sets busy to true or false.
   def busy(b) when is_boolean b do
     GenServer.cast(__MODULE__, {:set_busy, b})
+  end
+
+  # Gets busy
+  def busy do
+    GenServer.call(__MODULE__, {:get_busy})
   end
 
   def set_last(last) do

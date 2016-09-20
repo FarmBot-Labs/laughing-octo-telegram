@@ -23,7 +23,7 @@ defmodule SequenceHandler do
   def do_handle({:exec_sequence, steps, id}) when is_list(steps) do
     Sequence.clean_steps
     Sequence.add_steps(steps, id)
-    Sequence.execute
+    Sequence.execute(id)
   end
 
   # Unhandled event. Probably not implemented if it got this far.

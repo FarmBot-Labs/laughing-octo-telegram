@@ -107,6 +107,11 @@ defmodule Command do
     move_absolute(x, y, z + move_by, speed, id)
   end
 
+  # Pi3 is slower than a real pc.
+  def read_all_pins do
+    spawn fn -> Enum.each(0..13, fn pin -> Command.read_pin(pin); Process.sleep 500 end) end
+  end
+
   def read_pin(pin, mode \\ 1) do
     SerialMessageManager.sync_notify( {:send, "F42 P#{pin} M#{mode}" })
   end
@@ -123,17 +128,9 @@ defmodule Command do
       y: y,
       z: z}, Map.get(current_status, :PARAMS)) |> Map.merge(Map.get(current_status, :PINS))
 
-    message = %{id: id,
-                error: nil,
+    message = %{error: nil,
+                id: id,
                 result: results}
-    MqttMessageManager.sync_notify( {:emit, Poison.encode!(message)} )
-  end
-
-  # TODO: NOT WORKING
-  def boot_strap(id \\ nil) do
-    message = %{id: id,
-                error: nil,
-                result: %{}}
-    MqttMessageManager.sync_notify( {:emit, Poison.encode!(message)} )
+    GenServer.cast(MqttHandler, {:emit, Poison.encode!(message)} )
   end
 end

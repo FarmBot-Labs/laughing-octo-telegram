@@ -25,13 +25,13 @@ defmodule Fw.Mixfile do
                     :nerves_uart,
                     :httpotion,
                     :poison,
-                    # :bus,
                     :gen_stage,
                     :nerves_lib,
                     :rsa,
                     :cowboy,
                     :plug,
-                    :cors_plug
+                    :cors_plug,
+                    :hulaaki
                     ] ++ platform_apps(@target) ]
   end
 
@@ -42,13 +42,13 @@ defmodule Fw.Mixfile do
      {:nerves_uart, "~> 0.1.0"},
      {:httpotion, "~> 3.0.0"},
      {:poison, "~> 2.0"},
-     {:bus, "~> 0.1.4"},
      {:gen_stage, "~> 0.4"},
      {:nerves_lib, github: "nerves-project/nerves_lib"},
      {:rsa, "~> 0.0.1"},
      {:cowboy, "~> 1.0.0"},
      {:plug, "~> 1.0"},
-     {:cors_plug, "~> 1.1"}
+     {:cors_plug, "~> 1.1"},
+     {:hulaaki, "~> 0.0.4"}
    ]
   end
 
@@ -56,11 +56,31 @@ defmodule Fw.Mixfile do
     [{:"nerves_system_#{target}", ">= 0.0.0"}]
   end
 
+  def platform_deps("rpi") do
+    [
+      {:nerves_networking, github: "nerves-project/nerves_networking"}
+    ]
+  end
+
+  def platform_deps("rpi2") do
+    [
+      {:nerves_networking, github: "nerves-project/nerves_networking"}
+    ]
+  end
+
   def platform_deps("rpi3") do
     [
       {:nerves_networking, github: "nerves-project/nerves_networking"},
       {:nerves_interim_wifi, github: "nerves-project/nerves_interim_wifi" }
     ]
+  end
+
+  def platform_apps("rpi") do
+    [ :nerves_networking ]
+  end
+
+  def platform_apps("rpi2") do
+    [ :nerves_networking ]
   end
 
   def platform_apps("rpi3") do

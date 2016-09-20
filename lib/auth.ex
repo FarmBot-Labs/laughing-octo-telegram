@@ -1,9 +1,11 @@
 defmodule Auth do
+  @path Application.get_env(:fb, :ro_path)
   require GenServer
   require Logger
 
-  @hardware Application.get_env(:nerves, :hardware)
-  @path Application.get_env(:nerves, :ro_path)
+  @moduledoc """
+    This is a small disaster ever growing into a bigger disaster.
+  """
 
   def get_public_key(server) do
     resp = HTTPotion.get("#{server}/api/public_key")
@@ -21,10 +23,17 @@ defmodule Auth do
     secret
   end
 
+  @doc """
+    Saves the secret and the server to disk.
+  """
   def save_encrypted(secret, server) do
     File.write("#{@path}/secretes.txt", :erlang.term_to_binary(%{secret: secret, server: server}))
   end
 
+  @doc """
+    Loads the secret and server from disk
+    if there is no file returns nil
+  """
   def load_encrypted do
     file = File.read("#{@path}/secretes.txt")
     case file do
@@ -34,6 +43,7 @@ defmodule Auth do
     end
   end
 
+  # Gets a token from the API with given secret and server
   def get_token(secret, server) do
     payload = Poison.encode!(%{user: %{credentials: :base64.encode_to_string(secret) |> String.Chars.to_string }} )
     resp = HTTPotion.post "#{server}/api/tokens", [body: payload, headers: ["Content-Type": "application/json"]]
@@ -45,6 +55,15 @@ defmodule Auth do
     token
   end
 
+  # Infinite recursion until we have a token.
+  def fetch_token do
+    case Auth.get_token do
+      nil -> fetch_token
+      token -> token
+    end
+  end
+
+  # Genserver stuff
   def init(_args) do
     {:ok, load_encrypted}
   end
@@ -53,6 +72,7 @@ defmodule Auth do
     GenServer.start_link(__MODULE__, args, name: __MODULE__ )
   end
 
+  # Am i even using this?
   def login(email,pass,server) when is_bitstring(email)
         and is_bitstring(pass)
         and is_bitstring(server) do

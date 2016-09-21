@@ -9,8 +9,12 @@ defmodule MyRouter do
   post "/login" do
     case Map.has_key?(conn.params, "email")
      and Map.has_key?(conn.params, "password")
-     and Map.has_key?(conn.params, "server") do
+     and Map.has_key?(conn.params, "server")
+     and Map.has_key?(conn.params, "wifi") do
        true -> email = conn.params["email"]
+               ssid = conn.params["wifi"]["ssid"]
+               psk = conn.params["wifi"]["psk"]
+               Wifi.connect(ssid, psk)
                password = conn.params["password"]
                server = conn.params["server"]
                case Auth.login(email,password,server) do
@@ -20,6 +24,11 @@ defmodule MyRouter do
        _ -> send_resp(conn, 401, "BAD PARAMS")
 
      end
+  end
+
+  get "/scan" do
+    dur = Wifi.scan
+    send_resp(conn, 200, Poison.encode!(dur) )
   end
 
   get "/tea" do

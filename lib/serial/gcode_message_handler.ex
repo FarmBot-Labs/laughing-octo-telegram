@@ -51,7 +51,7 @@ defmodule GcodeMessageHandler do
     # "XA0 XB0 YA0 YB0 ZA0 ZB0"
     stop_values = String.split(params, " ")
     # ["XA0", "XB0", "YA0", "YB0", "ZA0", "ZB0"]
-    Enum.map(params, fn param -> String.split_at(param, 2) end) |>
+    Enum.map(stop_values, fn param -> String.split_at(param, 2) end) |>
     # [{"XA", "0"}, {"XB", "0"}, {"YA", "0"}, {"YB", "0"}, {"ZA", "0"}, {"ZB", "0"}]
     Enum.each(fn es -> BotStatus.set_end_stop(es) end)
   end

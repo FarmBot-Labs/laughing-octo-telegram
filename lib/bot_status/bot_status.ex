@@ -60,6 +60,12 @@ defmodule BotStatus do
    {:noreply,new_status}
   end
 
+  def handle_cast({:set_end_stop, _stop, _value}, current_status) do
+    #TODO: this?
+    Logger.debug("EndStop reporting is TODO")
+    {:noreply,  current_status}
+  end
+
   # Sets the pin value in the bot's status
   def set_pin(pin, value) when is_integer pin do
     case value do

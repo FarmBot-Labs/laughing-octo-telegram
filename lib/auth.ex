@@ -51,8 +51,7 @@ defmodule Auth do
   end
 
   def get_token do
-    token = GenServer.call(__MODULE__, {:get_token})
-    token
+    GenServer.call(__MODULE__, {:get_token})
   end
 
   # Infinite recursion until we have a token.
@@ -76,7 +75,10 @@ defmodule Auth do
   def login(email,pass,server) when is_bitstring(email)
         and is_bitstring(pass)
         and is_bitstring(server) do
-    GenServer.call(__MODULE__, {:login, email,pass,server})
+    case Wifi.connected? do
+      true -> GenServer.call(__MODULE__, {:login, email,pass,server})
+      _ -> login(email,pass,server) # Probably process heavy here but im lazy
+    end
   end
 
   def handle_call({:login, email,pass,server}, _from, _old_token) do

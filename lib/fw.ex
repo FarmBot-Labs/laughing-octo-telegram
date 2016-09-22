@@ -5,7 +5,7 @@ defmodule Fw do
     import Supervisor.Spec, warn: false
     Logger.debug("Starting Firmware on Target: #{@target}")
     children = [
-      Plug.Adapters.Cowboy.child_spec(:http, MyRouter, [], [port: 4001]),
+      Plug.Adapters.Cowboy.child_spec(:http, MyRouter, [], [port: 4000]),
       supervisor(NetworkSupervisor, [[]], restart: :permanent),
       supervisor(Controller, [[]], restart: :permanent)
     ]

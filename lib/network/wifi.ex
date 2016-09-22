@@ -43,12 +43,12 @@ defmodule Wifi do
       System.cmd("dnsmasq", ["--dhcp-lease", "/root/dnsmasq.lease"]) |> print_cmd_result
   end
 
-  defp start_hostapd(:prod) do
-    System.cmd("hostapd", ["-B", "-d", "/etc/hostapd/hostapd.conf"]) |> print_cmd_result
-  end
-
   defp start_hostapd_deps(_) do
     Logger.debug("HOSTAPD STUB")
+  end
+
+  defp start_hostapd(:prod) do
+    System.cmd("hostapd", ["-B", "-d", "/etc/hostapd/hostapd.conf"]) |> print_cmd_result
   end
 
   defp start_hostapd(_) do
@@ -65,6 +65,7 @@ defmodule Wifi do
   end
 
   def connect(ssid, pass) do
+    save({ssid, pass})
     GenServer.cast(__MODULE__, {:connect, ssid, pass})
   end
 

@@ -1,5 +1,6 @@
 defmodule Wifi do
   @path Application.get_env(:fb, :ro_path)
+  @env Mix.env
   use GenServer
   require Logger
   defp load do
@@ -19,8 +20,8 @@ defmodule Wifi do
     case initial_state do
       {:wpa_supplicant, ssid, pass} -> start_wifi_client(ssid, pass)
                                        {:ok, {:wpa, connected: false}}
-      _ -> start_hostapd_deps # These only need to be started onece per boot
-           start_hostapd
+      _ -> start_hostapd_deps(@env) # These only need to be started onece per boot
+           start_hostapd(@env)
            {:ok, :hostapd}
     end
   end
@@ -35,15 +36,23 @@ defmodule Wifi do
 
   # Blatently ripped off from @joelbyler
   # https://github.com/joelbyler/elixir_conf_chores/blob/f13298f9185b850fdfaad0448f03a03b3067a85c/apps/firmware/lib/firmware.ex
-  defp start_hostapd_deps do
+  defp start_hostapd_deps(:prod) do
       System.cmd("httpd",["-p", "80", "-h", "/www"]) |> print_cmd_result
       System.cmd("ip", ["link", "set", "wlan0", "up"]) |> print_cmd_result
       System.cmd("ip", ["addr", "add", "192.168.24.1/24", "dev", "wlan0"]) |> print_cmd_result
       System.cmd("dnsmasq", ["--dhcp-lease", "/root/dnsmasq.lease"]) |> print_cmd_result
   end
 
-  defp start_hostapd do
+  defp start_hostapd(:prod) do
     System.cmd("hostapd", ["-B", "-d", "/etc/hostapd/hostapd.conf"]) |> print_cmd_result
+  end
+
+  defp start_hostapd_deps(_) do
+    Logger.debug("HOSTAPD STUB")
+  end
+
+  defp start_hostapd(_) do
+    Logger.debug("HOSTAPD STUB")
   end
 
   defp print_cmd_result({_message, 0}) do

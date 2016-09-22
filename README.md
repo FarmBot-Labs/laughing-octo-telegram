@@ -67,6 +67,9 @@ Ok its actually really easy once your environment is set up. Let me prefix this 
 * install [`Nerves`]("https://hexdocs.pm/nerves/installation.html") (and all the things it tells you to install there)
 * CopyPasta this?
 
+# READ THIS
+ this is a little out of date. There is a pretty big step not documented here. If you personally would like to build this,
+  go ahead and talk to me directly. I don't have time to update the readme this very second. 
 ``` bash
 git clone https://github.com/FarmBot-Labs/laughing-octo-telegram
 cd laughing-octo-telegram #TODO: change this stupid name.

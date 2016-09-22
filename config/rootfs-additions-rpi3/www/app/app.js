@@ -4,7 +4,8 @@ var phonecatApp = angular.module('phonecatApp', []);
 phonecatApp.controller('PhoneListController', function PhoneListController($scope, $http) {
   $scope.ssids = [];
 
-  $scope.url = "http://" + location.host.split(":")[0] + ":4000"
+  // $scope.url = "http://" + location.host.split(":")[0] + ":4000";
+  $scope.url = "http://192.168.24.1:4000";
   $http.get($scope.url + "/scan").then(function(resp){
     console.log(resp.data);
     $scope.ssids = resp.data;
@@ -23,23 +24,23 @@ phonecatApp.controller('PhoneListController', function PhoneListController($scop
     psk = document.getElementById("wifipsk").value;
     email = document.getElementById("fbemail").value;
     password = document.getElementById("fbpwd").value;
-    username = document.getElementById("fbserver").value;
+    server = document.getElementById("fbserver").value;
     if(ssid != ""){
       json = {
         "email": email,
         "password": password,
-        "wifi":{ "ssid": ssid, "psk": psk}
+        "server": server,
+        "wifi":{
+          "ssid": ssid,
+          "psk": psk
+        }
       };
       console.log(JSON.stringify(json));
-      $http({
-        method: 'POST',
-        url: $scope.url + "/login",
-        headers: [{'application': 'x-javascript'},
-                  {'Content-Type': 'application/json'}]
-      }).then(function(resp){
+      $http.post($scope.url + "/login", json).then(function(resp){
         console.log("Should never see this...");
       }).catch(function(error){
         console.log("will probably see this a lot...");
+        console.log(JSON.stringify(error));
       });
     } else{
       console.log("write some better error handling n00b.")

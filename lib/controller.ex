@@ -13,9 +13,9 @@ defmodule Controller do
       supervisor(SerialSupervisor, [[]],    restart: :permanent ),
       supervisor(MqttSupervisor, [[]],      restart: :permanent ),
       supervisor(SequenceSupervisor, [[]],  restart: :permanent ),
-      worker(BotStatus, [[]]  ,             restart: :permanent )
+      worker(BotStatus, [[]],               restart: :permanent )
     ]
-    opts = [strategy: :one_for_all, name: Controller.Supervisor]
+    opts = [strategy: :one_for_one, name: Controller.Supervisor]
     Supervisor.start_link(children, opts)
   end
 end

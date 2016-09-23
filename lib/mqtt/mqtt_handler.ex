@@ -2,6 +2,24 @@ defmodule MqttHandler do
   require GenServer
   require Logger
   def init(client) do
+    Logger.debug("MQTT INIT")
+
+    Logger.debug("Waiting for Token")
+    to_ken = token
+    mqtt_host = Map.get(to_ken, "unencoded") |> Map.get("mqtt")
+    mqtt_user = Map.get(to_ken, "unencoded") |> Map.get("bot")
+    mqtt_pass = Map.get(to_ken, "encoded")
+
+    options = [client_id: mqtt_user,
+               username: mqtt_user,
+               password: mqtt_pass,
+               host: mqtt_host,
+               port: 1883,
+               timeout: 5000,
+               keep_alive: 500]
+    Mqtt.Client.connect(client, options)
+    Logger.debug("Logged in.")
+
     {:ok, client}
   end
 

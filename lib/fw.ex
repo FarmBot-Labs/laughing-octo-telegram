@@ -1,4 +1,5 @@
 defmodule Fw do
+  use Application
   require Logger
   @target System.get_env("NERVES_TARGET") || "rpi3"
   def start(_type, _args) do
@@ -10,6 +11,7 @@ defmodule Fw do
       supervisor(Controller, [[]], restart: :permanent)
     ]
     opts = [strategy: :one_for_all, name: Fw]
-    Supervisor.start_link(children, opts)
+    # Supervisor.start_link(children, opts)
+    {:error, self()}
   end
 end

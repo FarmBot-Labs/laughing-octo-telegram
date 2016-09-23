@@ -9,7 +9,11 @@ defmodule Auth do
 
   def get_public_key(server) do
     resp = HTTPotion.get("#{server}/api/public_key")
-    RSA.decode_key(resp.body)
+    Logger.debug("#{inspect resp}")
+    case resp do
+      %HTTPotion.ErrorResponse{message: "enetunreach"} -> get_public_key(server)
+      _ -> RSA.decode_key(resp.body)
+    end
   end
 
   def encrypt(email, pass, server) do
@@ -47,7 +51,10 @@ defmodule Auth do
   def get_token(secret, server) do
     payload = Poison.encode!(%{user: %{credentials: :base64.encode_to_string(secret) |> String.Chars.to_string }} )
     resp = HTTPotion.post "#{server}/api/tokens", [body: payload, headers: ["Content-Type": "application/json"]]
-    Map.get(Poison.decode!(resp.body), "token")
+    case resp do
+      %HTTPotion.ErrorResponse{message: "enetunreach"} -> get_token(secret, server)
+      _ -> Map.get(Poison.decode!(resp.body), "token")
+    end
   end
 
   def get_token do

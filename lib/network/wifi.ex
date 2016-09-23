@@ -17,8 +17,9 @@ defmodule Wifi do
   def init(_args) do
     GenEvent.add_handler(Nerves.NetworkInterface.event_manager(), Network.EventManager, [])
     initial_state = load
+    Logger.debug("#{inspect initial_state}")
     case initial_state do
-      {:wpa_supplicant, ssid, pass} -> start_wifi_client(ssid, pass)
+      {:wpa_supplicant, {ssid, pass}} -> start_wifi_client(ssid, pass)
                                        {:ok, {:wpa, connected: false}}
       _ -> start_hostapd_deps(@env) # These only need to be started onece per boot
            start_hostapd(@env)

@@ -9,6 +9,10 @@ defmodule MqttHandler do
     GenServer.start_link(__MODULE__, client, name: __MODULE__)
   end
 
+  def handle_cast({:connect, _message}, client) do
+    {:noreply, client}
+  end
+
   def handle_cast({:connect_ack, _message}, client) do
     options = [id: 24_756, topics: ["bot/#{bot}/request"], qoses: [1]]
     Mqtt.Client.subscribe(client, options)
@@ -126,4 +130,5 @@ defmodule MqttHandler do
   def emit(message) when is_bitstring(message) do
     GenServer.cast(__MODULE__, {:emit, message})
   end
+
 end

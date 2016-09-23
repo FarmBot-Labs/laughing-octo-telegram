@@ -9,11 +9,11 @@ defmodule Controller do
 
     children = [
       worker(Auth, [[]]),
-      supervisor(CommandSupervisor, [[]]),
-      supervisor(SerialSupervisor, [[]]),
-      supervisor(MqttSupervisor, [[]]),
-      supervisor(SequenceSupervisor, [[]]),
-      worker(BotStatus, [[]])
+      supervisor(CommandSupervisor, [[]],   restart: :permanent ),
+      supervisor(SerialSupervisor, [[]],    restart: :permanent ),
+      supervisor(MqttSupervisor, [[]],      restart: :permanent ),
+      supervisor(SequenceSupervisor, [[]],  restart: :permanent ),
+      worker(BotStatus, [[]]  ,             restart: :permanent )
     ]
     opts = [strategy: :one_for_all, name: Controller.Supervisor]
     Supervisor.start_link(children, opts)

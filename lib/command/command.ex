@@ -154,6 +154,5 @@ defmodule Command do
                 id: id,
                 result: results}
     MqttHandler.emit( Poison.encode!(message) )
-    # GenServer.cast(MqttHandler, {:emit, Poison.encode!(message)} )
   end
 end

@@ -48,7 +48,7 @@ defmodule Fw.Mixfile do
      {:cowboy, "~> 1.0.0"},
      {:plug, "~> 1.0"},
      {:cors_plug, "~> 1.1"},
-     {:hulaaki, "~> 0.0.4"}
+     {:hulaaki, github: "ConnorRigby/hulaaki"}
    ]
   end
 

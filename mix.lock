@@ -12,7 +12,7 @@
   "getopt": {:hex, :getopt, "0.8.2", "b17556db683000ba50370b16c0619df1337e7af7ecbf7d64fbf8d1d6bce3109b", [:rebar], []},
   "gettext": {:hex, :gettext, "0.11.0", "80c1dd42d270482418fa158ec5ba073d2980e3718bacad86f3d4ad71d5667679", [:mix], []},
   "httpotion": {:hex, :httpotion, "3.0.1", "6165e7fe4052dfeadd4b480e4ed6619975242ac91d577e4868af92613f9e99df", [:mix], [{:ibrowse, "~> 4.2", [hex: :ibrowse, optional: false]}]},
-  "hulaaki": {:hex, :hulaaki, "0.0.4", "be9b579573ef33138433fc4052ef9b4c04799f5a7f067b551c64ee813da01d3e", [:mix], []},
+  "hulaaki": {:git, "https://github.com/ConnorRigby/hulaaki.git", "47b77e8673ce522f9475e0c2e29f97648ce8598c", []},
   "ibrowse": {:hex, :ibrowse, "4.2.2", "b32b5bafcc77b7277eff030ed32e1acc3f610c64e9f6aea19822abcadf681b4b", [:rebar3], []},
   "jsx": {:hex, :jsx, "2.6.2", "213721e058da0587a4bce3cc8a00ff6684ced229c8f9223245c6ff2c88fbaa5a", [:mix, :rebar], []},
   "mime": {:hex, :mime, "1.0.1", "05c393850524767d13a53627df71beeebb016205eb43bfbd92d14d24ec7a1b51", [:mix], []},

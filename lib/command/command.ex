@@ -17,11 +17,11 @@ defmodule Command do
   @doc """
     Home All
   """
-  def home_all(_speed, id \\ nil) do
+  def home_all(speed, id \\ nil) do
     Logger.info("HOME ALL")
     BotStatus.set_pos(0,0,0) # I don't know if im supposed to do this?
     SerialMessageManager.sync_notify( {:send, "G28"} )
-    read_status(id)
+    move_absolute(0, 0, 0, speed, id)
   end
 
   @doc """
@@ -106,7 +106,7 @@ defmodule Command do
 
   # Pi3 is slower than a real pc.
   def read_all_pins do
-    spawn fn -> Enum.each(0..13, fn pin -> Command.read_pin(pin); Process.sleep 500 end) end
+    spawn fn -> Enum.each(0..13, fn pin -> Command.read_pin(pin); Process.sleep 750 end) end
   end
 
   # Stollen from rpi controller. Crashes on certain params for some reason? (1)
@@ -114,7 +114,7 @@ defmodule Command do
     rel_params = [0,1,11,12,13,21,22,23,
                            31,32,33,41,42,43,51,52,53,
                            61,62,63,71,72,73]
-    spawn fn -> Enum.each(rel_params, fn param -> Command.read_param(param); Process.sleep(500) end ) end
+    spawn fn -> Enum.each(rel_params, fn param -> Command.read_param(param); Process.sleep(750) end ) end
   end
 
   def read_pin(pin, mode \\ 1) do

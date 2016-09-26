@@ -40,6 +40,8 @@ defmodule MqttHandler do
     options = [id: 24_756, topics: ["bot/#{bot}/request"], qoses: [1]]
     spawn fn ->
       Mqtt.Client.subscribe(client, options)
+      Command.write_pin(13, 1, 1)
+      Command.write_pin(13, 0, 1)
       Command.read_all_pins # I'm truly sorry these are here
       Command.read_all_params
     end

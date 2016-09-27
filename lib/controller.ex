@@ -9,7 +9,8 @@ defmodule Controller do
 
     children = [
       worker(Auth, [[]]),
-      supervisor(CommandSupervisor, [[]],   restart: :permanent ),
+      supervisor(RPCSupervisor, [[]],   restart: :permanent ),
+      supervisor(BotCommandSupervisor, [[]], restart: :permanent),
       supervisor(SerialSupervisor, [[]],    restart: :permanent ),
       supervisor(MqttSupervisor, [[]],      restart: :permanent ),
       supervisor(SequenceSupervisor, [[]],  restart: :permanent ),

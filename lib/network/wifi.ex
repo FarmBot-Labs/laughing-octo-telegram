@@ -104,7 +104,6 @@ defmodule Wifi do
   end
 
   def handle_cast({:connected, con}, {:wpa, connected: _old}) do
-    Logger.debug("YAY CONNECTED BOIIII")
     {:noreply, {:wpa, connected: con} }
   end
 

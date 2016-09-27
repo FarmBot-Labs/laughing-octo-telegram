@@ -1,7 +1,5 @@
 alias Experimental.{GenStage}
-defmodule CommandMessageHandler do
-  @uuid Application.get_env(:mqtt, :uuid)
-  require IEx
+defmodule RPCMessageHandler do
   use GenStage
   require Logger
 
@@ -10,7 +8,7 @@ defmodule CommandMessageHandler do
   end
 
   def init(_args) do
-    {:consumer, :ok, subscribe_to: [CommandMessageManager]}
+    {:consumer, :ok, subscribe_to: [RPCMessageManager]}
   end
 
   def handle_events(events, _from, state) do
@@ -26,6 +24,7 @@ defmodule CommandMessageHandler do
     Command.e_stop(id)
   end
 
+  # Home All
   def do_handle(%{"method" =>"single_command.HOME ALL", "params" => %{"name" => "homeAll", "speed" => s}, "id" => id }) do
     Command.home_all(s, id)
   end

@@ -1,54 +1,45 @@
 defmodule Command do
   require Logger
   @moduledoc """
-    Big pattern matches r big
+    false
   """
 
   @doc """
     EMERGENCY STOP
   """
   def e_stop(id \\ nil) do
-    Logger.info("E STOP")
-    UartHandler.send("E") # Don't queue this one- write to serial line.
-    BotStatus.set_last(:emergency_stop)
-    read_status(id)
+    UartHandler.send("E")
+    UartHandler.send("E")
+    Command.read_status(id, "emergency_stop")
+    Process.exit(Process.whereis(BotCommandHandler), :kill)
   end
 
   @doc """
     Home All
   """
   def home_all(speed, id \\ nil) do
-    Logger.info("HOME ALL")
-    BotStatus.set_pos(0,0,0) # I don't know if im supposed to do this?
-    SerialMessageManager.sync_notify( {:send, "G28"} )
-    move_absolute(0, 0, 0, speed, id)
+    BotCommandHandler.notify({:home_all, {speed, id}})
   end
 
   @doc """
     Home x
   """
-  def home_x(_speed,id \\ nil) do
-    Logger.info("HOME X")
-    SerialMessageManager.sync_notify( {:send, "F11"} )
-    read_status(id)
+  def home_x(speed,id \\ nil) do
+    BotCommandHandler.notify({:home_x, {speed, id}})
   end
 
   @doc """
     Home y
   """
-  def home_y(_speed,id \\ nil) do
-    Logger.info("HOME Y")
-    SerialMessageManager.sync_notify( {:send, "F12"} )
-    read_status(id)
+  def home_y(speed,id \\ nil) do
+    BotCommandHandler.notify({:home_y, {speed, id}})
   end
 
   @doc """
     Home z
   """
-  def home_z(_speed,id \\ nil) do
-    Logger.info("HOME Z")
-    SerialMessageManager.sync_notify( {:send, "F13"} )
-    read_status(id)
+  def home_z(speed,id \\ nil) do
+    BotCommandHandler.notify({:home_z, {speed, id}})
   end
 
   @doc """
@@ -56,52 +47,46 @@ defmodule Command do
   """
   def write_pin(pin, value, mode \\ "1", id \\ nil)
   def write_pin(pin, value, mode, id) do
-    Logger.info("WRITE_PIN " <> "F41 P#{pin} V#{value} M#{mode}")
-    SerialMessageManager.sync_notify( {:send, "F41 P#{pin} V#{value} M#{mode}"} )
-    BotStatus.set_pin(pin, value)
-    read_status(id, "single_command")
+    BotCommandHandler.notify({:write_pin, {pin, value, mode, id}})
   end
 
   @doc """
     Moves to (x,y,z) point
   """
   def move_absolute(x \\ 0,y \\ 0,z \\ 0,s \\ 100, id \\ nil)
-  def move_absolute(x, y, z, _s, id) when x >= 0 and y >= 0 do
-    Logger.info("MOVE_ABSOLUTE " <> "G00 X#{x} Y#{y} Z#{z}")
-    SerialMessageManager.sync_notify( {:send, "G00 X#{x} Y#{y} Z#{z}"} )
-    BotStatus.set_pos(x,y,z)
-    read_status(id, "single_command")
+  def move_absolute(x, y, z, s, id) when x >= 0 and y >= 0 do
+    BotCommandHandler.notify({:move_absolute, {x,y,z,s,id}})
   end
 
   # When both x and y are negative
   def move_absolute(x, y, z, s,id ) when x < 0 and y < 0 do
-    move_absolute(0,0,z,s,id)
+    BotCommandHandler.notify({:move_absolute, {0,0,z,s,id}})
   end
 
   # when x is negative
   def move_absolute(x, y, z, s,id ) when x < 0 do
-    move_absolute(0,y,z,s,id)
+    BotCommandHandler.notify({:move_absolute, {0,y,z,s,id}})
   end
 
   # when y is negative
   def move_absolute(x, y, z, s, id ) when y < 0 do
-    move_absolute(x,0,z,s,id)
+    BotCommandHandler.notify({:move_absolute, {x,0,z,s,id}})
   end
 
   def move_relative(e, id \\ nil)
-  def move_relative({:x, speed, move_by}, id) do
+  def move_relative({:x, s, move_by}, id) do
     [x,y,z] = BotStatus.get_current_pos
-    move_absolute(x + move_by, y,z, speed, id)
+    move_absolute(x + move_by,y,z,s,id)
   end
 
-  def move_relative({:y, speed, move_by}, id) do
+  def move_relative({:y, s, move_by}, id) do
     [x,y,z] = BotStatus.get_current_pos
-    move_absolute(x, y + move_by ,z, speed, id)
+    move_absolute(x,y + move_by,z,s,id)
   end
 
-  def move_relative({:z, speed, move_by}, id) do
+  def move_relative({:z, s, move_by}, id) do
     [x,y,z] = BotStatus.get_current_pos
-    move_absolute(x, y, z + move_by, speed, id)
+    move_absolute(x,y,z + move_by,s,id)
   end
 
   # Pi3 is slower than a real pc.
@@ -111,7 +96,7 @@ defmodule Command do
 
   # Stollen from rpi controller. Crashes on certain params for some reason? (1)
   def read_all_params do
-    rel_params = [0,1,11,12,13,21,22,23,
+    rel_params = [0,11,12,13,21,22,23,
                            31,32,33,41,42,43,51,52,53,
                            61,62,63,71,72,73]
     spawn fn -> Enum.each(rel_params, fn param -> Command.read_param(param); Process.sleep(750) end ) end
@@ -133,7 +118,7 @@ defmodule Command do
   def update_param(param, value, id) when is_integer param do
     Logger.debug(value)
     SerialMessageManager.sync_notify({:send, "F22 P#{param} V#{value}"})
-    read_param(param)
+    Command.read_param(param)
     id
   end
 
@@ -154,5 +139,16 @@ defmodule Command do
                 id: id,
                 result: results}
     MqttHandler.emit( Poison.encode!(message) )
+  end
+
+  def log(message, priority \\ "low" ) when is_bitstring message do
+    [x,y,z] = BotStatus.get_current_pos
+    m = %{id: nil,
+          result: %{ name: "log_message",
+                     priority: priority,
+                     data: message,
+                     status: %{X: x, Y: y, Z: z},
+                     time: :os.system_time(:seconds) }}
+    MqttHandler.log( Poison.encode!(m) )
   end
 end

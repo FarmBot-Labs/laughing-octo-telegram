@@ -1,6 +1,5 @@
 alias Experimental.{GenStage}
 defmodule GcodeMessageHandler do
-  require IEx
   use GenStage
   require Logger
 
@@ -21,6 +20,7 @@ defmodule GcodeMessageHandler do
 
   # I think this is supposed to be somewhere else.
   def do_handle({:send, str}) do
+    BotStatus.busy true
     GenServer.cast(UartHandler, {:send, str})
   end
 
@@ -47,7 +47,7 @@ defmodule GcodeMessageHandler do
 
   # TODO report end stops
   def do_handle({:gcode, {:reporting_end_stops, params }}) do
-    Logger.debug("[gcode_handler] {:reporting_end_stops} stub: #{params}")
+    # Logger.debug("[gcode_handler] {:reporting_end_stops} stub: #{params}")
     # "XA0 XB0 YA0 YB0 ZA0 ZB0"
     stop_values = String.split(params, " ")
     # ["XA0", "XB0", "YA0", "YB0", "ZA0", "ZB0"]
@@ -66,13 +66,20 @@ defmodule GcodeMessageHandler do
   end
 
   def do_handle({:gcode, {:report_parameter_value, param }}) do
-    Logger.debug("Params: #{inspect param}")
     [p, v] = String.split(param, " ")
     [_, real_p] = String.split(p, "P")
     [_, real_v] = String.split(v, "V")
     Logger.debug("Param: #{real_p}, Value: #{real_v}")
     String.Casing.downcase(Atom.to_string(Gcode.parse_param(real_p) )) |>
     BotStatus.set_param(real_v)
+  end
+
+  def do_handle({:gcode, {:busy}}) do
+    BotStatus.busy true
+  end
+
+  def do_handle({:gcode, {:debug_message, "stopped"}} ) do
+    BotStatus.busy false
   end
 
   # Serial sending a debug message. Print it.

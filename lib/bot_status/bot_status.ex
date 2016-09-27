@@ -7,7 +7,8 @@ defmodule BotStatus do
                        PINS: Map.new,
                        PARAMS: %{ movement_axis_nr_steps_x: 222,
                                   movement_axis_nr_steps_y: 222,
-                                  movement_axis_nr_steps_z: 222 } }
+                                  movement_axis_nr_steps_z: 222,
+                                  param_version: "alpha" } }
     { :ok, initial_status }
   end
 
@@ -16,15 +17,15 @@ defmodule BotStatus do
   end
 
   def get_status do
-    GenServer.call(__MODULE__, {:get_status})
+    GenServer.call(__MODULE__, {:get_status}, 90000)
   end
 
-  def handle_call({:get_status}, _from, status) do
-    {:reply, status, status}
+  def handle_call({:get_status}, _from, current_status) do
+    {:reply, current_status, current_status}
   end
 
   def handle_call({:get_busy}, _from, current_status )  do
-    {:reply, current_status.busy, current_status}
+    {:reply, Map.get(current_status, :BUSY), current_status}
   end
 
   def handle_call({:get_pin, pin}, _from, status) do
@@ -46,6 +47,7 @@ defmodule BotStatus do
   end
 
   def handle_cast({:set_busy, b}, current_status ) when is_boolean b do
+      # if b != Map.get(current_status, :BUSY) do Logger.debug("busy: #{inspect b}") end
     {:noreply, Map.update(current_status, :BUSY, b, fn _x ->  b end)}
   end
 
@@ -62,7 +64,7 @@ defmodule BotStatus do
 
   def handle_cast({:set_end_stop, _stop, _value}, current_status) do
     #TODO: this?
-    Logger.debug("EndStop reporting is TODO")
+    # Logger.debug("EndStop reporting is TODO")
     {:noreply,  current_status}
   end
 
@@ -89,7 +91,7 @@ defmodule BotStatus do
   end
 
   # Gets busy
-  def busy do
+  def busy? do
     GenServer.call(__MODULE__, {:get_busy})
   end
 

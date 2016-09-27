@@ -39,9 +39,8 @@ defmodule MqttHandler do
   def handle_call({:connect_ack, _message}, _from, client) do
     options = [id: 24_756, topics: ["bot/#{bot}/request"], qoses: [1]]
     spawn fn ->
+      NetworkSupervisor.set_time # Should NOT be here
       Mqtt.Client.subscribe(client, options)
-      Command.write_pin(13, 1, 1)
-      Command.write_pin(13, 0, 1)
       Command.read_all_pins # I'm truly sorry these are here
       Command.read_all_params
     end
@@ -55,7 +54,7 @@ defmodule MqttHandler do
 
   def handle_call({:subscribed_publish, message}, _from, client) do
     Map.get(message, :message) |> Poison.decode! |>
-    CommandMessageManager.sync_notify
+    RPCMessageManager.sync_notify
     {:reply, :ok, client}
   end
 
@@ -83,9 +82,16 @@ defmodule MqttHandler do
     {:reply, :ok, client}
   end
 
-  def handle_call({:subscribe_ack, _message}, _from, client) do
+  def handle_call({:subscribe_ack, _message}, from, client) do
     Logger.debug("Subscribed.")
-    {:reply, :ok, client}
+    [x,y,z] = BotStatus.get_current_pos
+    m = %{id: nil,
+          result: %{ name: "log_message",
+                     priority: "low",
+                     data: "Bot Online!",
+                     status: %{X: x, Y: y, Z: z},
+                     time: :os.system_time(:seconds) }}
+    handle_call({:log, Poison.encode!(m)}, from, client)
   end
 
   def handle_call({:unsubscribe, _message}, _from, client) do
@@ -117,9 +123,18 @@ defmodule MqttHandler do
 
   def handle_call({:emit, message}, _from, client) do
     options = [ id: 1234,
-            topic: "bot/#{bot}/response",
-            message: message,
-            dup: 0, qos: 1, retain: 1]
+                topic: "bot/#{bot}/response",
+                message: message,
+                dup: 0, qos: 0, retain: 0]
+    spawn fn -> Mqtt.Client.publish(client, options) end
+    {:reply, :ok, client}
+  end
+
+  def handle_call({:log, message}, _from, client) do
+    options = [ id: 1234,
+                topic: "bot/#{bot}/notification",
+                message: message,
+                dup: 0, qos: 0, retain: 0]
     spawn fn -> Mqtt.Client.publish(client, options) end
     {:reply, :ok, client}
   end
@@ -142,6 +157,10 @@ defmodule MqttHandler do
 
   def emit(message) do
     GenServer.call(__MODULE__, {:emit, message})
+  end
+
+  def log(message) do
+    GenServer.call(__MODULE__, {:log, message})
   end
 
   defp bot do

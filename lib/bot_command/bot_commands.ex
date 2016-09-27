@@ -26,8 +26,7 @@ defmodule Command do
     Home x
     I dont think anything uses these.
   """
-  def home_x(speed,id \\ nil) do
-    BotCommandHandler.notify({:home_x, {speed, id}})
+  def home_x(_speed,id \\ nil) do
     Logger.info("HOME X")
     SerialMessageManager.sync_notify( {:send, "F11"} )
     Command.read_status(id)
@@ -36,7 +35,7 @@ defmodule Command do
   @doc """
     Home y
   """
-  def home_y(speed,id \\ nil) do
+  def home_y(_speed,id \\ nil) do
     Logger.info("HOME Y")
     SerialMessageManager.sync_notify( {:send, "F12"} )
     Command.read_status(id)
@@ -45,7 +44,7 @@ defmodule Command do
   @doc """
     Home z
   """
-  def home_z(speed,id \\ nil) do
+  def home_z(_speed,id \\ nil) do
     Logger.info("HOME Z")
     SerialMessageManager.sync_notify( {:send, "F13"} )
     Command.read_status(id)
@@ -58,7 +57,7 @@ defmodule Command do
   def write_pin(pin, value, mode, id) do
     BotStatus.set_pin(pin, value)
     Command.read_status(id, "single_command")
-    BotCommandHandler.notify({:write_pin, {pin, value, mode, id}})
+    BotCommandHandler.notify({:write_pin, {pin, value, mode}})
   end
 
   @doc """

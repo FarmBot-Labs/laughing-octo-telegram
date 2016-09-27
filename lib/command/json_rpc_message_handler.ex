@@ -131,6 +131,7 @@ defmodule RPCMessageHandler do
 
   # Unhandled event. Probably not implemented if it got this far.
   def do_handle(event) do
+    Command.log("Unhandled JSON RPC EVENT: #{inspect event}")
     Logger.debug("[RPC_HANDLER] (Probably not implemented) Unhandled Event: #{inspect event}")
   end
 end

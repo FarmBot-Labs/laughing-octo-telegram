@@ -11,6 +11,7 @@ defmodule NetworkSupervisor do
   end
 
   def set_time do
+    Logger.debug("Setting time. If it seems to hang here, reboot. Need a better ntp pool.")
     System.cmd("ntpd", ["-q", "-p", "pool.ntp.org"])
     check_time_set
   end

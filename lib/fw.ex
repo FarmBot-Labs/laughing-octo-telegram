@@ -1,15 +1,20 @@
 defmodule Fw do
   require Logger
+  use Supervisor
   @target System.get_env("NERVES_TARGET") || "rpi3"
-  def start(_type, _args) do
-    import Supervisor.Spec, warn: false
-    Logger.debug("Starting Firmware on Target: #{@target}")
+
+  def init(_args) do
     children = [
       Plug.Adapters.Cowboy.child_spec(:http, MyRouter, [], [port: 4000]),
       supervisor(NetworkSupervisor, [[]], restart: :permanent),
       supervisor(Controller, [[]], restart: :permanent)
     ]
     opts = [strategy: :one_for_all, name: Fw]
-    Supervisor.start_link(children, opts)
+    supervise(children, opts)
+  end
+
+  def start(_type, args) do
+    Logger.debug("Starting Firmware on Target: #{@target}")
+    Supervisor.start_link(__MODULE__, args)
   end
 end

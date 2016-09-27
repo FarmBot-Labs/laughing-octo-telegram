@@ -30,19 +30,19 @@ defmodule BotCommandHandler do
     GenServer.call(__MODULE__, :get_pid, 5000)
   end
 
-  # Gets one event at a time
-  # acts upon it
+  # Gets current events.
+  # acts upon them one by one
   # and gets more events
   def get_events(pid) do
-    case GenEvent.call(pid, BotCommandManager, :latest_event) do
-      nil -> get_events(pid)
-      event ->
-        Process.sleep(150)
-        check_busy
-        BotStatus.busy true
-        do_handle(event)
-        get_events(pid)
+    events = GenEvent.call(pid, BotCommandManager, :events)
+    for event <- events do
+      Process.sleep(150)
+      check_busy
+      BotStatus.busy true
+      do_handle(event)
+      # Command.log("Done executing Command log.")
     end
+    get_events(pid)
   end
 
   defp check_busy do
@@ -57,7 +57,7 @@ defmodule BotCommandHandler do
   end
 
   # These need to be "safe" commands. IE they shouldnt crash anythin.
-  defp do_handle({:write_pin, {pin, value, mode, id}}) do
+  defp do_handle({:write_pin, {pin, value, mode}}) do
     Logger.info("WRITE_PIN " <> "F41 P#{pin} V#{value} M#{mode}")
     SerialMessageManager.sync_notify( {:send, "F41 P#{pin} V#{value} M#{mode}"} )
   end
@@ -68,11 +68,13 @@ defmodule BotCommandHandler do
   end
 
   defp do_handle({method, params}) do
+    Command.log("Unhandled method: #{inspect method} with params: #{inspect params}")
     Logger.debug("Unhandled method: #{inspect method} with params: #{inspect params}")
   end
 
   # Unhandled event. Probably not implemented if it got this far.
   defp do_handle(event) do
+    Command.log("[Command Handler] (Probably not implemented) Unhandled Event: #{inspect event}")
     Logger.debug("[Command Handler] (Probably not implemented) Unhandled Event: #{inspect event}")
   end
 end

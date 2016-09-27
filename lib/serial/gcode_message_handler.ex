@@ -89,11 +89,13 @@ defmodule GcodeMessageHandler do
 
   # Unhandled gcode message
   def do_handle({:gcode, {:unhandled_gcode, code}}) do
+    Command.log("Unhandled or broken gcode: #{code}")
     Logger.debug("[gcode_handler] Broken code? : #{inspect code}")
   end
 
   # Catch all for serial messages
   def do_handle({:gcode, message}) do
+    Command.log("Unhandled or broken gcode: #{message}")
     Logger.debug("[gcode_handler] Unhandled Serial Gcode: #{inspect message}")
   end
 end

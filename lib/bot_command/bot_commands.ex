@@ -9,7 +9,6 @@ defmodule Command do
   """
   def e_stop(id \\ nil) do
     UartHandler.send("E")
-    UartHandler.send("E")
     Command.read_status(id, "emergency_stop")
     Process.exit(Process.whereis(BotCommandHandler), :kill)
   end
@@ -18,28 +17,38 @@ defmodule Command do
     Home All
   """
   def home_all(speed, id \\ nil) do
-    BotCommandHandler.notify({:home_all, {speed, id}})
+    Logger.info("HOME ALL")
+    # SerialMessageManager.sync_notify( {:send, "G28"} )
+    Command.move_absolute(0, 0, 0, speed, id)
   end
 
   @doc """
     Home x
+    I dont think anything uses these.
   """
   def home_x(speed,id \\ nil) do
     BotCommandHandler.notify({:home_x, {speed, id}})
+    Logger.info("HOME X")
+    SerialMessageManager.sync_notify( {:send, "F11"} )
+    Command.read_status(id)
   end
 
   @doc """
     Home y
   """
   def home_y(speed,id \\ nil) do
-    BotCommandHandler.notify({:home_y, {speed, id}})
+    Logger.info("HOME Y")
+    SerialMessageManager.sync_notify( {:send, "F12"} )
+    Command.read_status(id)
   end
 
   @doc """
     Home z
   """
   def home_z(speed,id \\ nil) do
-    BotCommandHandler.notify({:home_z, {speed, id}})
+    Logger.info("HOME Z")
+    SerialMessageManager.sync_notify( {:send, "F13"} )
+    Command.read_status(id)
   end
 
   @doc """
@@ -47,32 +56,49 @@ defmodule Command do
   """
   def write_pin(pin, value, mode \\ "1", id \\ nil)
   def write_pin(pin, value, mode, id) do
+    BotStatus.set_pin(pin, value)
+    Command.read_status(id, "single_command")
     BotCommandHandler.notify({:write_pin, {pin, value, mode, id}})
   end
 
   @doc """
-    Moves to (x,y,z) point
+    Moves to (x,y,z) point.
+    Sets the bot status to given coords
+    replies to the mqtt message that caused it (if one exists)
+    adds the move to the command queue.
   """
   def move_absolute(x \\ 0,y \\ 0,z \\ 0,s \\ 100, id \\ nil)
   def move_absolute(x, y, z, s, id) when x >= 0 and y >= 0 do
-    BotCommandHandler.notify({:move_absolute, {x,y,z,s,id}})
+    BotStatus.set_pos(x,y,z)
+    Command.read_status(id, "single_command")
+    BotCommandHandler.notify({:move_absolute, {x,y,z,s}})
   end
 
   # When both x and y are negative
   def move_absolute(x, y, z, s,id ) when x < 0 and y < 0 do
-    BotCommandHandler.notify({:move_absolute, {0,0,z,s,id}})
+    BotStatus.set_pos(0,0,z)
+    Command.read_status(id, "single_command")
+    BotCommandHandler.notify({:move_absolute, {0,0,z,s}})
   end
 
   # when x is negative
   def move_absolute(x, y, z, s,id ) when x < 0 do
-    BotCommandHandler.notify({:move_absolute, {0,y,z,s,id}})
+    BotStatus.set_pos(0,y,z)
+    Command.read_status(id, "single_command")
+    BotCommandHandler.notify({:move_absolute, {0,y,z,s}})
   end
 
   # when y is negative
   def move_absolute(x, y, z, s, id ) when y < 0 do
-    BotCommandHandler.notify({:move_absolute, {x,0,z,s,id}})
+    BotStatus.set_pos(x,0,z)
+    Command.read_status(id, "single_command")
+    BotCommandHandler.notify({:move_absolute, {x,0,z,s}})
   end
 
+  @doc """
+    Gets the current position
+    then pipes into move_absolute
+  """
   def move_relative(e, id \\ nil)
   def move_relative({:x, s, move_by}, id) do
     [x,y,z] = BotStatus.get_current_pos
@@ -89,23 +115,37 @@ defmodule Command do
     move_absolute(x,y,z + move_by,s,id)
   end
 
-  # Pi3 is slower than a real pc.
+  @doc """
+    Used when bootstrapping the bot.
+    Reads pins 0-13 in digital mode.
+  """
   def read_all_pins do
-    spawn fn -> Enum.each(0..13, fn pin -> Command.read_pin(pin); Process.sleep 750 end) end
+    spawn fn -> Enum.each(0..13, fn pin -> Command.read_pin(pin); Process.sleep 500 end) end
   end
 
-  # Stollen from rpi controller. Crashes on certain params for some reason? (1)
+    @doc """
+      Used when bootstrapping the bot.
+      Reads all the params.
+    """
   def read_all_params do
     rel_params = [0,11,12,13,21,22,23,
-                           31,32,33,41,42,43,51,52,53,
-                           61,62,63,71,72,73]
-    spawn fn -> Enum.each(rel_params, fn param -> Command.read_param(param); Process.sleep(750) end ) end
+                  31,32,33,41,42,43,51,
+                  52,53,61,62,63,71,72,73]
+    spawn fn -> Enum.each(rel_params, fn param -> Command.read_param(param); Process.sleep(500) end ) end
   end
 
-  def read_pin(pin, mode \\ 1) do
+  @doc """
+    Reads a pin value.
+    mode: 1 = analog.
+    mode: 0 = digital.
+  """
+  def read_pin(pin, mode \\ 0) do
     SerialMessageManager.sync_notify({:send, "F42 P#{pin} M#{mode}" })
   end
 
+  @doc """
+    Reads a param. Needs the integer version of said param.
+  """
   def read_param(param, id \\nil) when is_integer param do
     SerialMessageManager.sync_notify({:send, "F21 P#{param}" })
     id
@@ -122,6 +162,9 @@ defmodule Command do
     id
   end
 
+  @doc """
+    This should really renamed to rpc_builder or something.
+  """
   def read_status(id \\ nil, method \\ "read_status")
   def read_status(id, method) do
     current_status = BotStatus.get_status
@@ -141,6 +184,10 @@ defmodule Command do
     MqttHandler.emit( Poison.encode!(message) )
   end
 
+  @doc """
+    Logs a message to the frontend
+    The double posting is a problem in Frontend or Farmbot-JS
+  """
   def log(message, priority \\ "low" ) when is_bitstring message do
     [x,y,z] = BotStatus.get_current_pos
     m = %{id: nil,

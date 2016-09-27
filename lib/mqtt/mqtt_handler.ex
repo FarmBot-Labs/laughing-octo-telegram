@@ -2,18 +2,31 @@ defmodule MqttHandler do
   require GenServer
   require Logger
 
+  defp build_last_will_message()do
+    m = %{id: nil,
+          result: %{ name: "log_message",
+                     priority: "low",
+                     data: "Bot Offline",
+                     status: %{X: nil, Y: nil, Z: nil},
+                     time: 911678622 }}
+   Poison.encode!(m)
+  end
+
   def log_in(err_wait_time\\ 10000) do
     mqtt_host = Map.get(token, "unencoded") |> Map.get("mqtt")
     mqtt_user = Map.get(token, "unencoded") |> Map.get("bot")
     mqtt_pass = Map.get(token, "encoded")
-
     options = [client_id: mqtt_user,
                username: mqtt_user,
                password: mqtt_pass,
                host: mqtt_host,
                port: 1883,
                timeout: 5000,
-               keep_alive: 500]
+               keep_alive: 500,
+               will_topic: "bot/#{bot}/notification",
+               will_message: build_last_will_message,
+               will_qos: 0,
+               will_retain: 0]
     case GenServer.call(MqttHandler, {:log_in, options}) do
       {:error, reason} -> Logger.debug("Error connecting. #{inspect reason}")
                           Process.sleep(err_wait_time)

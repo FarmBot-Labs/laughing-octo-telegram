@@ -9,6 +9,7 @@ defmodule Command do
   """
   def e_stop(id \\ nil) do
     UartHandler.send("E")
+    BotStatus.set_pos(:unknown, :unknown, :unknown)
     Command.read_status(id, "emergency_stop")
     Process.exit(Process.whereis(BotCommandHandler), :kill)
   end
@@ -26,27 +27,24 @@ defmodule Command do
     Home x
     I dont think anything uses these.
   """
-  def home_x(_speed,id \\ nil) do
-    Logger.info("HOME X")
-    SerialMessageManager.sync_notify( {:send, "F11"} )
+  def home_x(speed,id \\ nil) do
+    BotCommandHandler.notify({:home_x, speed})
     Command.read_status(id)
   end
 
   @doc """
     Home y
   """
-  def home_y(_speed,id \\ nil) do
-    Logger.info("HOME Y")
-    SerialMessageManager.sync_notify( {:send, "F12"} )
+  def home_y(speed,id \\ nil) do
+    BotCommandHandler.notify({:home_y, speed})
     Command.read_status(id)
   end
 
   @doc """
     Home z
   """
-  def home_z(_speed,id \\ nil) do
-    Logger.info("HOME Z")
-    SerialMessageManager.sync_notify( {:send, "F13"} )
+  def home_z(speed,id \\ nil) do
+    BotCommandHandler.notify({:home_z, speed})
     Command.read_status(id)
   end
 

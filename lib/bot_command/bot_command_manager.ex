@@ -9,6 +9,11 @@ defmodule BotCommandManager do
     {:ok, [{event, params} | events]}
   end
 
+  def handle_event(:e_stop, events) do
+    # Destroy the event queue
+    {:ok, []}
+  end
+
   # dump teh current events to be handled
   def handle_call(:events, events) do
     {:ok, Enum.reverse(events), []}

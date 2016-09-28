@@ -26,8 +26,17 @@ defmodule BotCommandHandler do
     {:reply, pid, pid}
   end
 
+  def handle_call(:e_stop, _from, pid) do
+    GenEvent.notify(pid, :e_stop)
+    {:reply, :ok, pid}
+  end
+
   def get_pid do
     GenServer.call(__MODULE__, :get_pid, 5000)
+  end
+
+  def e_stop do
+    GenServer.call(__MODULE__, :e_stop, 5000)
   end
 
   # Gets current events.
@@ -54,6 +63,21 @@ defmodule BotCommandHandler do
 
   def notify(event) do
     GenServer.cast(__MODULE__, {:add_event, event})
+  end
+
+  defp do_handle({:home_x, {speed}}) do
+    Logger.info("HOME X")
+    SerialMessageManager.sync_notify( {:send, "F11"} )
+  end
+
+  defp do_handle({:home_y, {speed}}) do
+    Logger.info("HOME Y")
+    SerialMessageManager.sync_notify( {:send, "F12"} )
+  end
+
+  defp do_handle({:home_z, {speed}}) do
+    Logger.info("HOME Z")
+    SerialMessageManager.sync_notify( {:send, "F13"} )
   end
 
   # These need to be "safe" commands. IE they shouldnt crash anythin.

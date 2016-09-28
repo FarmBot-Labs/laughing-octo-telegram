@@ -49,7 +49,7 @@ defmodule Fw.Mixfile do
 
   # dev
   def apps(:dev) do
-    apps
+    apps ++ [:fake_nerves]
   end
 
   # test
@@ -81,11 +81,11 @@ defmodule Fw.Mixfile do
   end
 
   def deps(:test) do
-    deps
+    deps ++ deps(:dev)
   end
 
   def deps(:dev) do
-    deps
+    deps ++ [{:fake_nerves, github: "ConnorRigby/fake_nerves"}]
   end
 
   def platform_deps("rpi3") do

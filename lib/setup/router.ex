@@ -1,5 +1,7 @@
 defmodule MyRouter do
+  @env Mix.env
   use Plug.Router
+  require Logger
   plug CORSPlug
   plug Plug.Parsers, parsers: [:urlencoded, :json],
                      pass:  ["text/*"],
@@ -12,24 +14,33 @@ defmodule MyRouter do
      and Map.has_key?(conn.params, "password")
      and Map.has_key?(conn.params, "server")
      and Map.has_key?(conn.params, "wifi") do
-       true -> email = conn.params["email"]
-               ssid = conn.params["wifi"]["ssid"]
-               psk = conn.params["wifi"]["psk"]
-               Wifi.connect(ssid, psk)
-               password = conn.params["password"]
-               server = conn.params["server"]
-               case Auth.login(email,password,server) do
-                 nil -> send_resp(conn, 401, "LOGIN FAIL")
-                 token -> send_resp(conn, 200, "LOGIN OK")
-               end
-       _ -> send_resp(conn, 401, "BAD PARAMS")
+       true ->
+         email = conn.params["email"]
+         ssid = conn.params["wifi"]["ssid"]
+         psk = conn.params["wifi"]["psk"]
+         if(@env == :prod) do  Wifi.connect(ssid, psk) end
+         password = conn.params["password"]
+         server = conn.params["server"]
+         case Auth.login(email,password,server) do
+           nil -> send_resp(conn, 401, "LOGIN FAIL")
+           token -> send_resp(conn, 200, "LOGIN OK")
+           _ -> Logger.debug("YES")
+         end
+       _ ->
+         send_resp(conn, 401, "BAD PARAMS")
 
      end
   end
 
   get "/scan" do
-    dur = Wifi.scan
-    send_resp(conn, 200, Poison.encode!(dur) )
+    send_resp(conn, 200, Poison.encode!(scan) )
+  end
+
+  def scan do
+    case @env do
+      :prod -> Wifi.scan
+      _ -> ["not", "on", "real", "hardware"]
+    end
   end
 
   get "/tea" do

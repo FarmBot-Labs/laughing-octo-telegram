@@ -127,7 +127,10 @@ defmodule Wifi do
 
   # IF hostapd always no.
   def handle_call(:am_i_connected, _from, :hostapd) do
-    {:reply, false, :hostapd}
+    case @env do
+      :prod -> {:reply, false, :hostapd}
+      _ -> {:reply, true, :hostapd}
+    end
   end
 
   def handle_call(:am_i_connected, _from, {:wpa, connected: are_connected}) do

@@ -6,12 +6,15 @@ defmodule MqttHandler do
     m = %{id: nil,
           result: %{ name: "log_message",
                      priority: "low",
-                     data: "Bot Offline",
+                     data: "Something Bad happened. Bot going Offline.",
                      status: %{X: nil, Y: nil, Z: nil},
                      time: 911678622 }}
    Poison.encode!(m)
   end
 
+  @doc """
+    "tries to log into mqtt."
+  """
   def log_in(err_wait_time\\ 10000) do
     mqtt_host = Map.get(token, "unencoded") |> Map.get("mqtt")
     mqtt_user = Map.get(token, "unencoded") |> Map.get("bot")
@@ -40,20 +43,31 @@ defmodule MqttHandler do
   end
 
   def start_link(args) do
-    blah = GenServer.start_link(__MODULE__, args, name: __MODULE__)
+    handler = GenServer.start_link(__MODULE__, args, name: __MODULE__)
     log_in
-    blah
+    Logger.debug("MQTT ONLINE")
+    handler
   end
 
   def handle_call({:connect, _message}, _from, client) do
     {:reply, :ok, client}
   end
 
-  def handle_call({:connect_ack, _message}, _from, client) do
+  def handle_call({:connect_ack, _message}, from, client) do
     options = [id: 24_756, topics: ["bot/#{bot}/request"], qoses: [1]]
     spawn fn ->
       NetworkSupervisor.set_time # Should NOT be here
       Mqtt.Client.subscribe(client, options)
+
+      [x,y,z] = BotStatus.get_current_pos
+      m = %{id: nil,
+            result: %{ name: "log_message",
+                       priority: "low",
+                       data: "Bot Bootstrapping",
+                       status: %{X: x, Y: y, Z: z},
+                       time: :os.system_time(:seconds) }}
+      handle_call({:log, Poison.encode!(m)}, from, client)
+
       Command.read_all_pins # I'm truly sorry these are here
       Command.read_all_params
     end
@@ -153,7 +167,7 @@ defmodule MqttHandler do
   end
 
   def handle_call(thing, _from, client) do
-    Logger.debug("FIND ME #{inspect thing}")
+    Logger.debug("Unhandled Thing #{inspect thing}")
     {:reply, :ok, client}
   end
 

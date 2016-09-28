@@ -12,7 +12,6 @@ defmodule Network.EventManager do
   end
 
   def handle_event(_event, state) do
-    # Logger.debug("EVENT: #{inspect _event}")
     {:ok, state}
   end
 

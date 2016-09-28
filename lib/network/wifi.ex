@@ -17,7 +17,6 @@ defmodule Wifi do
   def init(_args) do
     GenEvent.add_handler(Nerves.NetworkInterface.event_manager(), Network.EventManager, [])
     initial_state = load
-    Logger.debug("#{inspect initial_state}")
     case initial_state do
       {:wpa_supplicant, {ssid, pass}} -> start_wifi_client(ssid, pass)
                                        {:ok, {:wpa, connected: false}}
@@ -58,7 +57,7 @@ defmodule Wifi do
 
   defp print_cmd_result({_message, 0}) do
     # IO.puts message
-    nil # TOO MUCH STUFF FUCK
+    nil
   end
 
   defp print_cmd_result({message, err_no}) do
@@ -82,11 +81,6 @@ defmodule Wifi do
     GenServer.call(__MODULE__, :am_i_connected)
   end
 
-  #TODO: REMOVE ME
-  def state do
-    GenServer.call(__MODULE__, :get_state)
-  end
-
   def handle_cast({:connect, ssid, pass}, :hostapd) do
     Logger.debug("trying to switch from hostapd to wpa_supplicant ")
     System.cmd("sh", ["-c", "killall hostapd"]) |> print_cmd_result
@@ -108,11 +102,9 @@ defmodule Wifi do
   end
 
   def handle_cast({:connected, con}, :hostapd) do
-    # i think this might be broken
     {:noreply, {:wpa, connected: con} }
   end
 
-  # THese are scary and  im sorry
   def handle_call(:scan, _from, {:wpa, connected: are_connected} ) do
     {hc, 0} = System.cmd("iw", ["wlan0", "scan", "ap-force"])
     p = String.replace(hc, "\t\t", "") |>

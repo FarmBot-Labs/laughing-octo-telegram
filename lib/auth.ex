@@ -9,7 +9,6 @@ defmodule Auth do
 
   def get_public_key(server) do
     resp = HTTPotion.get("#{server}/api/public_key")
-    Logger.debug("#{inspect resp}")
     case resp do
       %HTTPotion.ErrorResponse{message: "enetunreach"} -> get_public_key(server)
       _ -> RSA.decode_key(resp.body)

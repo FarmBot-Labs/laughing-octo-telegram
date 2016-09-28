@@ -29,8 +29,8 @@ defmodule BotStatus do
   end
 
   def handle_call({:get_pin, pin}, _from, status) do
-    all_pins = Map.get(status, :PIN)
-    got_pin = Map.get(all_pins, pin)
+    all_pins = Map.get(status, :PINS)
+    got_pin = Map.get(all_pins, "pin#{pin}")
     {:reply, got_pin, status}
   end
 
@@ -112,7 +112,7 @@ defmodule BotStatus do
 
   def set_pos({:y, y}) do
     [x,_y,z] = get_current_pos
-    set_pos(x,y,z )
+    set_pos(x,y,z)
   end
 
   def set_pos({:z, z}) do

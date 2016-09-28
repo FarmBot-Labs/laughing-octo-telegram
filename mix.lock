@@ -23,6 +23,7 @@
   "nerves_lib": {:git, "https://github.com/nerves-project/nerves_lib.git", "78b9e489af7df25c162d4a1130569e7cc301cb48", []},
   "nerves_network_interface": {:hex, :nerves_network_interface, "0.3.2", "e7450f7eccd7387ceebee6096a0646bcdc0dd4aa77077e5fa81f6767da9b77af", [:mix, :make], [{:elixir_make, "~> 0.3", [hex: :elixir_make, optional: false]}]},
   "nerves_networking": {:git, "https://github.com/nerves-project/nerves_networking.git", "e4398e6be3b02f912f96dec6e13f0ec36d6d1a31", []},
+  "nerves_ntp": {:hex, :nerves_ntp, "0.1.1", "fa1a1f5c325d00fc3d940d8f5deea98964c84e617c7370325989d64accfa698a", [:mix], []},
   "nerves_system": {:hex, :nerves_system, "0.1.6", "d3cff2ae40d3764c75b187cbbdb09985ae169489c26178d765edc9b66bc4e355", [:mix], []},
   "nerves_system_br": {:hex, :nerves_system_br, "0.6.1", "c3f0d07bf0919a5065cf4d34c42656595a7a30109624ea3ddda315882d6ce54a", [:mix], []},
   "nerves_system_rpi": {:hex, :nerves_system_rpi, "0.6.1", "c8b9aef37c532223b5c21df3103b59ea170ebe47d11f112cbb6fb1455cdeacee", [:mix], [{:nerves_system, "~> 0.1.4", [hex: :nerves_system, optional: false]}, {:nerves_system_br, "~> 0.6.1", [hex: :nerves_system_br, optional: false]}, {:nerves_toolchain_armv6_rpi_linux_gnueabi, "~> 0.6.1", [hex: :nerves_toolchain_armv6_rpi_linux_gnueabi, optional: false]}]},

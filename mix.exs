@@ -114,6 +114,6 @@ defmodule Fw.Mixfile do
   end
 
   def system("rpi3") do
-    [{:"nerves_system_rpi3", git: "https://github.com/ConnorRigby/nerves_system_rpi3.git", tag: "v0.7.0-farmbot" }]
+    [{:"nerves_system_rpi3", git: "https://github.com/ConnorRigby/nerves_system_rpi3.git", tag: "v0.7.0-farmbot-1" }]
   end
 end

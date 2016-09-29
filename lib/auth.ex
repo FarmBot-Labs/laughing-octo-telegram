@@ -51,6 +51,7 @@ defmodule Auth do
     resp = HTTPotion.post "#{server}/api/tokens", [body: payload, headers: ["Content-Type": "application/json"]]
     case resp do
       %HTTPotion.ErrorResponse{message: "enetunreach"} -> get_token(secret, server)
+      %HTTPotion.ErrorResponse{message: reason} -> {:error, reason}
       _ -> Map.get(Poison.decode!(resp.body), "token")
     end
   end

@@ -70,6 +70,7 @@ defmodule MqttHandler do
 
       Command.read_all_pins # I'm truly sorry these are here
       Command.read_all_params
+      BotSync.sync
     end
     keep_connection_alive
     {:reply, :ok, client}

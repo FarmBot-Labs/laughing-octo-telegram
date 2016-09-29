@@ -6,15 +6,15 @@ defmodule Sequence do
   require Logger
   require Kernel
   def init(_) do
-    {:ok, []}
+    {:ok, %{}}
   end
 
   def start_link(_) do
-    GenServer.start_link(__MODULE__, [], name: __MODULE__)
+    GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
   end
 
-  def handle_cast({:add_step, function}, steps) do
-    {:noreply, steps ++ [function]}
+  def handle_cast({:add_step, {position, function}}, steps) do
+    {:noreply, Map.update(steps, position, function, fn _x -> function end)}
   end
 
   def handle_call({:get_steps}, _from, steps) do
@@ -22,13 +22,17 @@ defmodule Sequence do
   end
 
   def handle_call({:clean_steps}, _from, steps) do
-    {:reply, steps, []}
+    {:reply, steps, %{}}
   end
 
   def handle_call({:execute, id}, _from, steps) do
     Command.read_status(id)
-    pid = spawn fn -> Enum.each(steps, fn step -> Kernel.apply(step, []) end) end
-    {:reply, pid, []}
+    Logger.debug("#{inspect steps}")
+    ordered_steps = Enum.sort(steps)
+    ordered_list = Enum.map(ordered_steps, fn({_pos, step}) -> step end)
+    Logger.debug("#{inspect ordered_list}")
+    pid = spawn fn -> Enum.each(ordered_list, fn step -> Kernel.apply(step, []) end) end
+    {:reply, pid, %{}}
   end
 
   def execute(id \\nil) do
@@ -38,31 +42,37 @@ defmodule Sequence do
   # Pattern match available commands
   def add_step(step,id \\ nil)
   def add_step(%{"command" => command, "message_type" => "move_absolute",
-                "position" => _position}, id) do
+                "position" => position}, id) do
     #TODO: i think this would allow negative numbers
-    xpos = Map.get(command, "x", nil)
-    ypos = Map.get(command, "y", nil)
-    zpos = Map.get(command, "z", nil)
-    speed = Map.get(command, "speed", nil)
-    GenServer.cast(__MODULE__, {:add_step, fn -> Command.move_absolute(xpos,ypos,zpos,speed, id) end})
+    xpos = String.to_integer(Map.get(command, "x", nil))
+    ypos = String.to_integer(Map.get(command, "y", nil))
+    zpos = String.to_integer(Map.get(command, "z", nil))
+    speed = String.to_integer(Map.get(command, "speed", nil))
+    GenServer.cast(__MODULE__, {:add_step, {position, fn -> Command.move_absolute(xpos,ypos,zpos,speed, id) end}})
   end
 
-  def add_step(%{"command" => %{"speed" => speed, "x" => x, "y" => y, "z" => z}, "message_type" => "move_relative", "position" => _position}, _id) do
-    Logger.debug("Add Step for move_relative is not implemented")
-    # GenServer.cast(__MODULE__, {:add_step, fn -> Command.move_relative() end})
+  def add_step(%{"command" => %{"speed" => speed,
+                                "x" => x, "y" => y, "z" => z},
+                                "id" => _istep_d,
+                                "message_type" => "move_relative",
+                                "position" => position, "sequence_id" => _seq_id}, _id) do
+    GenServer.cast(__MODULE__,
+      {:add_step, {position,
+        fn -> Command.move_relative(%{x: String.to_integer(x), y: String.to_integer(y), z: String.to_integer(z), speed: speed}) end}})
   end
 
   # Write pin (MODE IS NOT WORKING?)
-  def add_step(%{"command" => %{"mode" => _mode, "pin" => pin, "value" => value}, "message_type" => "pin_write", "position" => _position}, id) do
-    GenServer.cast(__MODULE__, {:add_step, fn -> Command.write_pin(String.to_integer(pin), String.to_integer(value),0, id) end})
+  def add_step(%{"command" => %{"mode" => _mode, "pin" => pin, "value" => value}, "message_type" => "pin_write", "position" => position}, id) do
+    GenServer.cast(__MODULE__,
+      {:add_step, {position, fn -> Command.write_pin(String.to_integer(pin), String.to_integer(value),0, id) end}})
   end
 
   # Process.sleep seems to be off by a couple seconds?
-  def add_step(%{"command" => %{"value" => milis}, "message_type" => "wait", "position" => _position}, _id) do
-    GenServer.cast(__MODULE__, {:add_step, fn -> Process.sleep(String.to_integer(milis)) end})
+  def add_step(%{"command" => %{"value" => milis}, "message_type" => "wait", "position" => position}, _id) do
+    GenServer.cast(__MODULE__,
+      {:add_step, {position, fn -> Process.sleep(String.to_integer(milis)) end}})
   end
 
-  # Stub af here
   def add_step(%{"command" => command, "message_type" => "read_pin", "position" => position}, _id) do
     # I dont know what this is supposed to do ???
     Logger.debug("add_step: COMMAND: #{inspect command}, POSITION: #{inspect position}")

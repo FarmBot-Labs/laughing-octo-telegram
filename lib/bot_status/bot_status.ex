@@ -105,22 +105,26 @@ defmodule BotStatus do
   end
 
   # All three coords
-  def set_pos(x,y,z) do
+  def set_pos(x,y,z)
+  when is_integer x and
+   is_integer y and
+   is_integer z
+  do
     GenServer.cast(__MODULE__, {:set_pos, x,y,z})
   end
 
   # If we only have one coord, get the current pos of the others first.
-  def set_pos({:x, x}) do
+  def set_pos({:x, x}) when is_integer(x) do
     [_x,y,z] = get_current_pos
     set_pos(x,y,z )
   end
 
-  def set_pos({:y, y}) do
+  def set_pos({:y, y}) when is_integer(y) do
     [x,_y,z] = get_current_pos
     set_pos(x,y,z)
   end
 
-  def set_pos({:z, z}) do
+  def set_pos({:z, z}) when is_integer(z) do
     [x,y,_z] = get_current_pos
     set_pos(x,y,z )
   end

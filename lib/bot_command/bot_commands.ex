@@ -97,19 +97,32 @@ defmodule Command do
     then pipes into move_absolute
   """
   def move_relative(e, id \\ nil)
-  def move_relative({:x, s, move_by}, id) do
+  def move_relative({:x, s, move_by}, id) when is_integer move_by do
     [x,y,z] = BotStatus.get_current_pos
+    Logger.debug("#{inspect [x,y,z]}")
+
     move_absolute(x + move_by,y,z,s,id)
   end
 
-  def move_relative({:y, s, move_by}, id) do
+  def move_relative({:y, s, move_by}, id) when is_integer move_by do
     [x,y,z] = BotStatus.get_current_pos
     move_absolute(x,y + move_by,z,s,id)
   end
 
-  def move_relative({:z, s, move_by}, id) do
+  def move_relative({:z, s, move_by}, id) when is_integer move_by do
     [x,y,z] = BotStatus.get_current_pos
     move_absolute(x,y,z + move_by,s,id)
+  end
+
+  def move_relative(%{x: x_move_by, y: y_move_by, z: z_move_by, speed: speed}, id)
+  when is_integer x_move_by and
+       is_integer y_move_by and
+       is_integer z_move_by
+       do
+         Logger.debug("MOVE X BY: #{inspect x_move_by}")
+    move_relative({:x, speed, x_move_by}, id)
+    move_relative({:y, speed, y_move_by}, id)
+    move_relative({:z, speed, z_move_by}, id)
   end
 
   @doc """

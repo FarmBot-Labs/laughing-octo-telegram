@@ -7,6 +7,14 @@ defmodule AuthTest do
   setup  do
     HTTPotion.start
     Plug.Adapters.Cowboy.http(TestRouter, [])
+    Auth.start_link(:normal)
+    on_exit fn ->
+      case File.read("#{@path}/secretes.txt") do
+        {:ok, _contents} -> File.rm("#{@path}/secretes.txt")
+        _ -> nil
+      end
+      :ok
+    end
     :ok
   end
 
@@ -26,7 +34,25 @@ defmodule AuthTest do
     secret = Auth.encrypt("fred_flinstone@tehflinstones.co.uk", "johnGoodman_is+GR8", server)
     assert(secret != nil)
     assert(is_bitstring(secret))
-    contents = File.read!("/tmp/secretes.txt") |> :erlang.binary_to_term
+    contents = File.read!("#{@path}/secretes.txt") |> :erlang.binary_to_term
     assert(contents.secret == secret)
+  end
+
+  test "gets a token" do
+    server = "http://localhost:4000"
+    secret = Auth.encrypt("fred_flinstone@tehflinstones.co.uk", "johnGoodman_is+GR8", server)
+    token = Auth.get_token(secret, server)
+    assert(token != nil)
+    assert(is_map(token))
+    assert(Map.has_key?(token, "encoded"))
+    assert(Map.has_key?(token, "unencoded"))
+  end
+
+  test "gets the current server" do
+    server = "http://localhost:4000"
+    secret = Auth.encrypt("fred_flinstone@tehflinstones.co.uk", "johnGoodman_is+GR8", server)
+    token = Auth.get_token(secret, server)
+    unencoded_token = Map.get(token, "unencoded")
+    assert(Map.get(unencoded_token, "iss") == "http://localhost:3000") # from the fake token in the router
   end
 end

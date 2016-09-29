@@ -124,9 +124,9 @@ defmodule RPCMessageHandler do
     Command.update_param(Gcode.parse_param(String.Casing.upcase("movement_invert_motor_z") |> String.to_atom),
         value, id) |> Command.read_status("calibrate_axis") end
 
-  #TODO
   def do_handle(%{"id" => _id, "method" => "sync_sequence", "params" => _params}) do
-    Logger.debug("TODO: sync_sequence request. I don't know what this message is for?")
+    BotSync.sync
+    Command.read_status("sync_sequence")
   end
 
   # Unhandled event. Probably not implemented if it got this far.

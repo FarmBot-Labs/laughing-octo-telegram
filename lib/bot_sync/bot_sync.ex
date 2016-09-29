@@ -12,7 +12,7 @@ defmodule BotSync do
   def handle_cast(:sync, state) do
     resp = HTTPotion.get "#{server}/api/sequences",
     [headers: ["Content-Type": "application/json",
-               "Authorization": Map.get(state.token, "encoded")]]
+               "Authorization": "Bearer" <> Map.get(state.token, "encoded")]]
     case resp do
       %HTTPotion.ErrorResponse{message: reason} ->
         Logger.debug("Error Fetching sequences: #{inspect reason}")

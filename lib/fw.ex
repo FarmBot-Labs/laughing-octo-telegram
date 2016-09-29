@@ -24,4 +24,10 @@ defmodule Fw do
   def version do
     @version
   end
+
+  def factory_reset do
+    File.rm("/root/secretes.txt")
+    File.rm("/root/network.config")
+    Nerves.Firmware.reboot
+  end
 end

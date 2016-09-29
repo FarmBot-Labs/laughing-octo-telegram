@@ -2,6 +2,9 @@ defmodule Fw do
   require Logger
   use Supervisor
   @target System.get_env("NERVES_TARGET") || "rpi3"
+  @version Path.join(__DIR__ <> "/..", "VERSION")
+    |> File.read!
+    |> String.strip
 
   def init(_args) do
     children = [
@@ -16,5 +19,9 @@ defmodule Fw do
   def start(_type, args) do
     Logger.debug("Starting Firmware on Target: #{@target}")
     Supervisor.start_link(__MODULE__, args)
+  end
+
+  def version do
+    @version
   end
 end

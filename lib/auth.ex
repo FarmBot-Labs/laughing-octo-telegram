@@ -11,6 +11,7 @@ defmodule Auth do
     resp = HTTPotion.get("#{server}/api/public_key")
     case resp do
       %HTTPotion.ErrorResponse{message: "enetunreach"} -> get_public_key(server)
+      %HTTPotion.ErrorResponse{message: error} -> {:error, error}
       _ -> RSA.decode_key(resp.body)
     end
   end
@@ -19,8 +20,6 @@ defmodule Auth do
     # Json to encrypt.
     json = Poison.encode!(%{"email": email,"password": pass,
         "id": Nerves.Lib.UUID.generate,"version": 1})
-
-    # RSA that sumbitch
     secret = String.Chars.to_string(RSA.encrypt(json, {:public, get_public_key(server)}))
     save_encrypted(secret, server)
     secret

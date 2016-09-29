@@ -1,5 +1,4 @@
 ExUnit.start
-
 defmodule BotStatusTest do
   use ExUnit.Case, async: true
 
@@ -50,5 +49,12 @@ end
 
     BotStatus.set_pos({:z, -45})
     assert(BotStatus.get_current_pos == [55,15000,-45])
+  end
+
+  test "gets the current version" do
+    version = Path.join(__DIR__ <> "/../../", "VERSION")
+              |> File.read!
+              |> String.strip
+    assert(BotStatus.get_current_version == version)
   end
 end

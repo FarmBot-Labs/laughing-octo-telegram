@@ -2,10 +2,13 @@ defmodule Fw.Mixfile do
   use Mix.Project
 
   @target System.get_env("NERVES_TARGET") || "rpi3"
+  @version Path.join(__DIR__, "VERSION")
+    |> File.read!
+    |> String.strip
 
   def project do
     [app: :fw,
-     version: "0.0.1",
+     version: @version,
      target: @target,
      archives: [nerves_bootstrap: "~> 0.1.4"],
      deps_path: "deps/#{@target}",

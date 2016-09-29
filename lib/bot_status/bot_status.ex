@@ -3,6 +3,7 @@ defmodule BotStatus do
   require Logger
   def init(_) do
     initial_status = %{X: 0, Y: 0, Z: 0, S: 10,
+                       VERSION: Fw.version,
                        BUSY: true, LAST: "",
                        PINS: Map.new,
                        PARAMS: %{ movement_axis_nr_steps_x: 222,
@@ -26,6 +27,10 @@ defmodule BotStatus do
 
   def handle_call({:get_busy}, _from, current_status )  do
     {:reply, Map.get(current_status, :BUSY), current_status}
+  end
+
+  def handle_call(:get_controller_version, _from, current_status) do
+    {:reply, Map.get(current_status, :VERSION), current_status }
   end
 
   def handle_call({:get_pin, pin}, _from, status) do
@@ -128,5 +133,9 @@ defmodule BotStatus do
   # Get current coords
   def get_current_pos do
     [:X,:Y,:Z] |> Enum.map(fn(v) ->  Map.get(get_status, v) end)
+  end
+
+  def get_current_version do
+    GenServer.call(__MODULE__, :get_controller_version)
   end
 end

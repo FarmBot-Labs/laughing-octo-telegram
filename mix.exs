@@ -38,6 +38,7 @@ defmodule Fw.Mixfile do
      :plug,
      :cors_plug,
      :hulaaki,
+     :runtime_tools
      ]
   end
 

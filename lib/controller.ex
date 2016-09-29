@@ -12,7 +12,7 @@ defmodule Controller do
       supervisor(RPCSupervisor, [[]],   restart: :permanent ),
       supervisor(BotCommandSupervisor, [[]], restart: :permanent),
       worker(BotStatus, [[]]  ,             restart: :permanent ),
-      worker(BotSync, [[]]  ,             restart: :permanent ),
+      # worker(BotSync, [[]]  ,             restart: :permanent ),
       supervisor(SerialSupervisor, [[]],    restart: :permanent ),
       supervisor(MqttSupervisor, [[]],      restart: :permanent ),
       supervisor(SequenceSupervisor, [[]],  restart: :permanent )

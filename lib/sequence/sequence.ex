@@ -26,7 +26,6 @@ defmodule Sequence do
   end
 
   def handle_call({:execute, _id}, _from, steps) do
-    Command.read_status
     Logger.debug("#{inspect steps}")
     ordered_steps = Enum.sort(steps)
     ordered_list = Enum.map(ordered_steps, fn({_pos, step}) -> step end)

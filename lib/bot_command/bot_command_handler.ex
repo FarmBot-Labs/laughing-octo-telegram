@@ -49,7 +49,7 @@ defmodule BotCommandHandler do
       check_busy
       BotStatus.busy true
       do_handle(event)
-      # Command.log("Done executing Command log.")
+      RPCMessageHandler.send_status
     end
     get_events(pid)
   end

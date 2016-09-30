@@ -10,6 +10,7 @@ defmodule Command do
   def e_stop do
     UartHandler.send("E")
     Process.exit(Process.whereis(BotCommandHandler), :kill)
+    :ok
   end
 
   @doc """
@@ -139,6 +140,7 @@ defmodule Command do
   """
   def read_pin(pin, mode \\ 1) do
     SerialMessageManager.sync_notify({:send, "F42 P#{pin} M#{mode}" })
+    :ok
   end
 
   @doc """
@@ -146,6 +148,7 @@ defmodule Command do
   """
   def read_param(param) when is_integer param do
     SerialMessageManager.sync_notify({:send, "F21 P#{param}" })
+    :ok
   end
 
   # I don't have this one read_status at the end because if mqtt not connected
@@ -154,9 +157,5 @@ defmodule Command do
   def update_param(param, value) when is_integer param do
     SerialMessageManager.sync_notify({:send, "F22 P#{param} V#{value}"})
     Command.read_param(param)
-  end
-
-  def read_status do
-    BotStatus.get_status
   end
 end

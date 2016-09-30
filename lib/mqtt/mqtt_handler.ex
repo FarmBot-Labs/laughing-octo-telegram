@@ -26,7 +26,7 @@ defmodule MqttHandler do
                port: 1883,
                timeout: 5000,
                keep_alive: 500,
-               will_topic: "bot/#{bot}/notification",
+               will_topic: "bot/#{bot}/rpc",
                will_message: build_last_will_message,
                will_qos: 0,
                will_retain: 0]
@@ -54,20 +54,11 @@ defmodule MqttHandler do
   end
 
   def handle_call({:connect_ack, _message}, from, client) do
-    options = [id: 24_756, topics: ["bot/#{bot}/request"], qoses: [1]]
+    options = [id: 24756, topics: ["bot/#{bot}/rpc"], qoses: [0]]
     spawn fn ->
       NetworkSupervisor.set_time # Should NOT be here
       Mqtt.Client.subscribe(client, options)
-
-      [x,y,z] = BotStatus.get_current_pos
-      m = %{id: nil,
-            result: %{ name: "log_message",
-                       priority: "low",
-                       data: "Bot Bootstrapping",
-                       status: %{X: x, Y: y, Z: z},
-                       time: :os.system_time(:seconds) }}
-      handle_call({:log, Poison.encode!(m)}, from, client)
-
+      handle_call({:emit, RPCMessageHandler.log_msg("Bot Bootstrapping")}, from, client)
       Command.read_all_pins # I'm truly sorry these are here
       Command.read_all_params
       BotSync.sync
@@ -112,14 +103,7 @@ defmodule MqttHandler do
 
   def handle_call({:subscribe_ack, _message}, from, client) do
     Logger.debug("Subscribed.")
-    [x,y,z] = BotStatus.get_current_pos
-    m = %{id: nil,
-          result: %{ name: "log_message",
-                     priority: "low",
-                     data: "Bot Online!",
-                     status: %{X: x, Y: y, Z: z},
-                     time: :os.system_time(:seconds) }}
-    handle_call({:log, Poison.encode!(m)}, from, client)
+    handle_call({:emit, RPCMessageHandler.log_msg("Bot Online")}, from, client)
   end
 
   def handle_call({:unsubscribe, _message}, _from, client) do
@@ -149,18 +133,9 @@ defmodule MqttHandler do
     end
   end
 
-  def handle_call({:emit, message}, _from, client) do
+  def handle_call({:emit, message}, _from, client) when is_bitstring(message) do
     options = [ id: 1234,
-                topic: "bot/#{bot}/response",
-                message: message,
-                dup: 0, qos: 0, retain: 0]
-    spawn fn -> Mqtt.Client.publish(client, options) end
-    {:reply, :ok, client}
-  end
-
-  def handle_call({:log, message}, _from, client) do
-    options = [ id: 1234,
-                topic: "bot/#{bot}/notification",
+                topic: "bot/#{bot}/rpc",
                 message: message,
                 dup: 0, qos: 0, retain: 0]
     spawn fn -> Mqtt.Client.publish(client, options) end
@@ -183,12 +158,8 @@ defmodule MqttHandler do
     {:noreply, client}
   end
 
-  def emit(message) do
+  def emit(message) when is_bitstring(message) do
     GenServer.call(__MODULE__, {:emit, message})
-  end
-
-  def log(message) do
-    GenServer.call(__MODULE__, {:log, message})
   end
 
   defp bot do

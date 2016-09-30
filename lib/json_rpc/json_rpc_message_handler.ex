@@ -18,19 +18,30 @@ defmodule RPCMessageHandler do
     {:noreply, [], state}
   end
 
-  defp ack_msg(id) when is_bitstring(id) do
+  # JSON RPC RESPONSE
+  def ack_msg(id) when is_bitstring(id) do
     Poison.encode!(
     %{id: id,
       error: nil,
       result: "OK"})
   end
 
-  defp ack_msg(id, {name, message}) when is_bitstring(id) and is_bitstring(name) and is_bitstring(message) do
+  # JSON RPC RESPONSE ERROR
+  def ack_msg(id, {name, message}) when is_bitstring(id) and is_bitstring(name) and is_bitstring(message) do
     Poison.encode!(
     %{id: id,
       error: %{name: name,
                message: message },
       result: nil})
+  end
+
+  def log_msg(message) do
+    Poison.encode!(
+      %{ id: nil,
+         method: "log_message",
+         params:[%{status: BotStatus.get_status,
+                   time: :os.system_time(:seconds),
+                   message: message}] })
   end
 
   def handle_rpc(%{"method" => method, "params" => params, "id" => id})
@@ -130,12 +141,20 @@ defmodule RPCMessageHandler do
 
   # Read status
   def do_handle("read_status", _) do
-    Command.read_status
+    send_status
   end
 
   # Unhandled event. Probably not implemented if it got this far.
   def do_handle(event, params) do
     Logger.debug("[RPC_HANDLER] got valid rpc, but event is not implemented.")
     {:error, "Unhandled method", "#{inspect {event, params}}"}
+  end
+
+  def log(message) when is_bitstring(message) do
+    MqttHandler.emit(log_msg(message))
+  end
+
+  def send_status do
+    MqttHandler.emit(Poison.encode!(BotStatus.get_status))
   end
 end

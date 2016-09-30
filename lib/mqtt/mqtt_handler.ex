@@ -2,8 +2,8 @@ defmodule MqttHandler do
   require GenServer
   require Logger
 
-  defp build_last_will_message()do
-    RPCMessageHandler.log("Something Bad Happened. Bot going offline.")
+  defp build_last_will_message do
+    RPCMessageHandler.log_msg("Something Bad Happened. Bot going offline.")
   end
 
   @doc """

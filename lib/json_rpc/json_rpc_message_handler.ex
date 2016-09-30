@@ -2,7 +2,15 @@ alias Experimental.{GenStage}
 defmodule RPCMessageHandler do
   use GenStage
   require Logger
+  @transport MqttHandler
 
+  @doc """
+    This is where all JSON RPC messages come in.
+    Currently only from Mqtt, but is technically transport agnostic.
+    Right now we set @transport to MqttHandler, but it could technically be
+    In config and set to anything that can emit and recieve JSON RPC messages.
+  """
+  
   def start_link() do
     GenStage.start_link(__MODULE__, :ok)
   end
@@ -50,9 +58,9 @@ defmodule RPCMessageHandler do
        is_bitstring(id)
   do
     case do_handle(method, params) do
-      :ok -> MqttHandler.emit(ack_msg(id))
-      {:error, name, message} -> MqttHandler.emit(ack_msg(id, {name, message}))
-      unknown_error -> MqttHandler.emit(ack_msg(id, {"unknown_error", "#{inspect unknown_error}"}))
+      :ok -> @transport.emit(ack_msg(id))
+      {:error, name, message} -> @transport.emit(ack_msg(id, {name, message}))
+      unknown_error -> @transport.emit(ack_msg(id, {"unknown_error", "#{inspect unknown_error}"}))
     end
   end
 
@@ -148,6 +156,15 @@ defmodule RPCMessageHandler do
     send_status
   end
 
+  def do_handle("force_get_update", [%{"url" => url}]) when is_bitstring(url) do
+    spawn fn -> Downloader.download_and_install_update(url) end
+    :ok
+  end
+
+  def do_handle("force_get_update", _) do
+    {:error, "BAD_PARAMS", Poison.encode(%{"url" => "string"})}
+  end
+
   # Unhandled event. Probably not implemented if it got this far.
   def do_handle(event, params) do
     Logger.debug("[RPC_HANDLER] got valid rpc, but event is not implemented.")
@@ -155,10 +172,10 @@ defmodule RPCMessageHandler do
   end
 
   def log(message) when is_bitstring(message) do
-    MqttHandler.emit(log_msg(message))
+    @transport.emit(log_msg(message))
   end
 
   def send_status do
-    MqttHandler.emit(Poison.encode!(BotStatus.get_status))
+    @transport.emit(Poison.encode!(BotStatus.get_status))
   end
 end

@@ -25,11 +25,14 @@ phonecatApp.controller('PhoneListController', function PhoneListController($scop
     email = document.getElementById("fbemail").value;
     password = document.getElementById("fbpwd").value;
     server = document.getElementById("fbserver").value;
+    port = document.getElementById("fbport").value;
+
+    realSrv = "http://" + server + ":" + port;
     if(ssid != ""){
       json = {
         "email": email,
         "password": password,
-        "server": server,
+        "server": realSrv,
         "wifi":{
           "ssid": ssid,
           "psk": psk

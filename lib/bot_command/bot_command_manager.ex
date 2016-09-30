@@ -9,7 +9,7 @@ defmodule BotCommandManager do
     {:ok, [{event, params} | events]}
   end
 
-  def handle_event(:e_stop, events) do
+  def handle_event(:e_stop, _events) do
     # Destroy the event queue
     {:ok, []}
   end

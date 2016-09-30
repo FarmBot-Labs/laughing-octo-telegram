@@ -50,3 +50,19 @@ mix deps.get
 iex -S mix
 ```
 You should only need to do the first two commands once.
+
+## Debugging on hardware
+The Rpi will boot up with an Iex console on the hardware UART. If you need to debug something this is the easiest to get too.
+If you do not happen to have a 3.3v FTDI cable, you can build the firmware with the console on HDMI. In the `erlinit.config` file you can change `-c ttyS0` to `-c ttyS1`. This requires you to plug a usb mouse, keyboard and monitor into your pi.
+
+## Other stuff
+You can connect IEx to the running pi by doing
+`iex -name console@localhost --remsh farmbot@<FARMBOT IP ADDRESS> --cookie democookie`
+Debug message still only will print to UART or HDMI (whichever you have configured)
+
+If you are frequently building firmware, removing the sdcard and writing the build every time gets pretty old. You can upload firmware to an already running farmbot one of two ways after you run a successful `mix firmware`
+0. You can upload the image to the pi using CURL or similar. `curl -T _images/rpi3/fw.fw "http://$RPI_IP_ADDRESS:8988/firmware" -H "Content-Type: application/x-firmware" -H "X-Reboot: true"`
+0. Or you can host the .fw file on your pc using a webserver ie `npm install serve` and download it from the pi.This should be ran ON THE PI ITSELF `Downloader.download_and_install_update("http://<DEV_PC_IP_ADDRESS>/WHEREVER YOUR FILE IS")`
+
+# Tests
+Test coverage is not very good right now but you should be able to run `mix test --no-start` and see tests run. 

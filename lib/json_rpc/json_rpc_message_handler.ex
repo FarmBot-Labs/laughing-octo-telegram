@@ -13,125 +13,129 @@ defmodule RPCMessageHandler do
 
   def handle_events(events, _from, state) do
     for event <- events do
-      # I don't know why I did this looking back.
-      do_handle(event)
+      handle_rpc(event)
     end
     {:noreply, [], state}
   end
 
+  defp ack_msg(id) when is_bitstring(id) do
+    Poison.encode!(
+    %{id: id,
+      error: nil,
+      result: "OK"})
+  end
+
+  defp ack_msg(id, {name, message}) when is_bitstring(id) and is_bitstring(name) and is_bitstring(message) do
+    Poison.encode!(
+    %{id: id,
+      error: %{name: name,
+               message: message },
+      result: nil})
+  end
+
+  def handle_rpc(%{"method" => method, "params" => params, "id" => id})
+  when is_list(params) and
+       is_bitstring(method) and
+       is_bitstring(id)
+  do
+    case do_handle(method, params) do
+      :ok -> MqttHandler.emit(ack_msg(id))
+      {:error, name, message} -> MqttHandler.emit(ack_msg(id, {name, message}))
+      unknown_error -> MqttHandler.emit(ack_msg(id, {"unknown_error", "#{inspect unknown_error}"}))
+    end
+  end
+
   # E STOP
-  def do_handle(%{"method" => "single_command.EMERGENCY STOP", "params" => _, "id" => id}) do
-    Command.e_stop(id)
+  def do_handle("emergency_stop", _) do
+    Command.e_stop
   end
 
   # Home All
-  def do_handle(%{"method" =>"single_command.HOME ALL", "params" => %{"name" => "homeAll", "speed" => s}, "id" => id }) do
-    Command.home_all(s, id)
+  def do_handle("home_all", [ %{speed: s} ]) when is_integer s do
+    Command.home_all(s)
   end
 
-  # Write a pin
-  def do_handle(%{"method" => "single_command.PIN WRITE", "params" => %{"mode" => m, "pin" => p, "value1" => v}, "id" => id}) do
-    Command.write_pin(p,v,m, id)
+  def do_handle("home_all", [ %{speed: s} ]) when is_bitstring s do
+    Command.home_all("#{s}")
+  end
+
+  def do_handle("home_all", _)  do
+    {:error, "BAD_PARAMS",
+      Poison.encode(%{"speed" => "number"})}
+  end
+
+  # WRITE_PIN
+  def do_handle("write_pin", [ %{"pin_mode" => 1, "pin_number" => p, "pin_value" => v} ])
+    when is_integer p and
+         is_integer v
+  do
+    Command.write_pin(p,v,1)
+  end
+
+  def do_handle("write_pin", [ %{"pin_mode" => 0, "pin_number" => p, "pin_value" => v} ])
+    when is_integer p and
+         is_integer v
+  do
+    Command.write_pin(p,v,0)
+  end
+
+  def do_handle("write_pin", _) do
+    {:error, "BAD_PARAMS",
+      Poison.encode(%{"pin_mode" => "1 or 2", "pin_number" => "number", "pin_value" => "number"})}
   end
 
   # Move to a specific coord
-  def do_handle(%{"method" => "single_command.MOVE ABSOLUTE", "params" =>  %{"speed" => s, "x" => x, "y" => y, "z" => z}, "id" => id}) do
-    Command.move_absolute(x,y,z,s, id)
+  def do_handle("move_absolute",  [%{"speed" => s, "x" => x, "y" => y, "z" => z}])
+  when is_integer(x) and
+       is_integer(y) and
+       is_integer(z) and
+       is_integer(s)
+  do
+    Command.move_absolute(x,y,z,s)
   end
 
-  # I think this will work
-  def do_handle(%{"method" => "single_command.MOVE RELATIVE", "params" =>  %{"name" => "moveRelative", "speed" => s, "x" => move_by}, "id" => id}) do
-    Command.move_relative({:x, s, move_by}, id)
+  def do_handle("move_absolute",  _) do
+    {:error, "BAD_PARAMS",
+      Poison.encode(%{"x" => "number", "y" => "number", "z" => "number", "speed" => "number"})}
   end
 
-  def do_handle(%{"method" => "single_command.MOVE RELATIVE", "params" => %{"name" => "moveRelative", "speed" => s, "y" => move_by}, "id" => id}) do
-    Command.move_relative({:y, s, move_by}, id)
+  # Move relative to current x position
+  def do_handle("move_relative", [%{"speed" => s, "x" => move_by}])
+    when is_integer(s) and
+         is_integer(move_by)
+  do
+    Command.move_relative({:x, s, move_by})
   end
 
-  def do_handle(%{"method" => "single_command.MOVE RELATIVE", "params" => %{"name" => "moveRelative", "speed" => s, "z" => move_by}, "id" => id}) do
-    Command.move_relative({:z, s, move_by}, id)
+  # Move relative to current y position
+  def do_handle("move_relative", [%{"speed" => s, "y" => move_by}])
+    when is_integer(s) and
+         is_integer(move_by)
+  do
+    Command.move_relative({:y, s, move_by})
+  end
+
+# Move relative to current z position
+  def do_handle("move_relative", [%{"speed" => s, "z" => move_by}])
+    when is_integer(s) and
+         is_integer(move_by)
+  do
+    Command.move_relative({:z, s, move_by})
+  end
+
+  def do_handle("move_relative", _) do
+    {:error, "BAD_PARAMS",
+      Poison.encode(%{"x or y or z" => "number to move by", "speed" => "number"})}
   end
 
   # Read status
-  def do_handle(%{"method" => "read_status", "id" => id}) do
-    Command.read_status(id)
-  end
-
-  # Im getting tired, and can't tell the difference between these functions?
-  def do_handle(%{"id" => id,
-                  "method" => "exec_sequence",
-                  "params" => %{"color" => color,
-                                "id" => _param_id,
-                                "name" => name,
-                                "steps" => steps }}) do
-
-    Logger.debug("Execute sequence: #{id}, #{name}, #{color}")
-    SequenceManager.sync_notify({:exec_sequence, steps, id})
-  end
-
-
-  def do_handle(%{"id" => id,
-                  "method" => "exec_sequence",
-                  "params" => %{"color" => color,
-                                "dirty" => _dirty,
-                                "name" => name,
-                                "steps" => steps }}) do
-
-    Logger.debug("Execute sequence: #{id}, #{name}, #{color}")
-    SequenceManager.sync_notify({:exec_sequence, steps, id})
-  end
-
-  # ALLOW NEGATIVES (Juset realized i probs dont need this to be three seperate things)
-  def do_handle(%{"id" => id, "method" => "update_calibration", "params" => %{"movement_home_up_x" => value}}) do
-    Logger.debug("update_calibration: movement_home_up_x: #{value}")
-    Command.update_param(Gcode.parse_param(String.Casing.upcase("movement_home_up_x") |> String.to_atom),
-        value, id) |> Command.read_status("calibrate_axis") end
-  def do_handle(%{"id" => id, "method" => "update_calibration", "params" => %{"movement_home_up_y" => value}}) do
-    Logger.debug("update_calibration: movement_home_up_y: #{value}")
-    Command.update_param(Gcode.parse_param(String.Casing.upcase("movement_home_up_y") |> String.to_atom),
-        value, id) |> Command.read_status("calibrate_axis") end
-  def do_handle(%{"id" => id, "method" => "update_calibration", "params" => %{"movement_home_up_z" => value}}) do
-    Logger.debug("update_calibration: movement_home_up_z: #{value}")
-    Command.update_param(Gcode.parse_param(String.Casing.upcase("movement_home_up_z") |> String.to_atom),
-        value, id) |> Command.read_status("calibrate_axis") end
-
-
-  # INVERT MOTORS
-  def do_handle(%{"id" => id, "method" => "update_calibration", "params" => %{"movement_invert_motor_x" => value}}) do
-    Logger.debug("update_calibration: movement_invert_motor_x: #{value}")
-    Command.update_param(Gcode.parse_param(String.Casing.upcase("movement_invert_motor_x") |> String.to_atom),
-        value, id) |> Command.read_status("calibrate_axis") end
-  def do_handle(%{"id" => id, "method" => "update_calibration", "params" => %{"movement_invert_motor_y" => value}}) do
-    Logger.debug("update_calibration: movement_invert_motor_y: #{value}")
-    Command.update_param(Gcode.parse_param(String.Casing.upcase("movement_invert_motor_y") |> String.to_atom),
-        value, id) |> Command.read_status("calibrate_axis") end
-  def do_handle(%{"id" => id, "method" => "update_calibration", "params" => %{"movement_invert_motor_z" => value}}) do
-    Logger.debug("update_calibration: movement_invert_motor_z: #{value}")
-    Command.update_param(Gcode.parse_param(String.Casing.upcase("movement_invert_motor_z") |> String.to_atom),
-        value, id) |> Command.read_status("calibrate_axis") end
-
-  # INVERT ENDPOINTS
-  def do_handle(%{"id" => id, "method" => "update_calibration", "params" => %{"movement_invert_endpoints_x" => value}}) do
-    Logger.debug("update_calibration: movement_invert_motor_x: #{value}")
-    Command.update_param(Gcode.parse_param(String.Casing.upcase("movement_invert_motor_x") |> String.to_atom),
-        value, id) |> Command.read_status("calibrate_axis") end
-  def do_handle(%{"id" => id, "method" => "update_calibration", "params" => %{"movement_invert_endpoints_y" => value}}) do
-    Logger.debug("update_calibration: movement_invert_motor_y: #{value}")
-    Command.update_param(Gcode.parse_param(String.Casing.upcase("movement_invert_motor_y") |> String.to_atom),
-        value, id) |> Command.read_status("calibrate_axis") end
-  def do_handle(%{"id" => id, "method" => "update_calibration", "params" => %{"movement_invert_endpoints_z" => value}}) do
-    Logger.debug("update_calibration: movement_invert_motor_z: #{value}")
-    Command.update_param(Gcode.parse_param(String.Casing.upcase("movement_invert_motor_z") |> String.to_atom),
-        value, id) |> Command.read_status("calibrate_axis") end
-
-  def do_handle(%{"id" => _id, "method" => "sync_sequence", "params" => _params}) do
-    BotSync.sync
-    Command.read_status("sync_sequence")
+  def do_handle("read_status", _) do
+    Command.read_status
   end
 
   # Unhandled event. Probably not implemented if it got this far.
-  def do_handle(event) do
-    Command.log("Unhandled JSON RPC EVENT: #{inspect event}")
-    Logger.debug("[RPC_HANDLER] (Probably not implemented) Unhandled Event: #{inspect event}")
+  def do_handle(event, params) do
+    Logger.debug("[RPC_HANDLER] got valid rpc, but event is not implemented.")
+    {:error, "Unhandled method", "#{inspect {event, params}}"}
   end
 end

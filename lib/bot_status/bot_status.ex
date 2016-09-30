@@ -2,14 +2,14 @@ defmodule BotStatus do
   use GenServer
   require Logger
   def init(_) do
-    initial_status = %{X: 0, Y: 0, Z: 0, S: 10,
-                       VERSION: Fw.version,
-                       BUSY: true, LAST: "",
-                       PINS: Map.new,
-                       PARAMS: %{ movement_axis_nr_steps_x: 222,
-                                  movement_axis_nr_steps_y: 222,
-                                  movement_axis_nr_steps_z: 222,
-                                  param_version: "alpha" } }
+    # MAKE SURE THE STATUS STAYS FLAT. YOU WILL THANK YOURSELF LATER.
+    initial_status = %{ x: 0,y: 0,z: 0,s: 10,
+                        version: Fw.version,
+                        busy: true,
+                        last_sync: "never",
+                        movement_axis_nr_steps_x: 222,
+                        movement_axis_nr_steps_y: 222,
+                        movement_axis_nr_steps_z: 222 }
     { :ok, initial_status }
   end
 
@@ -26,45 +26,38 @@ defmodule BotStatus do
   end
 
   def handle_call({:get_busy}, _from, current_status )  do
-    {:reply, Map.get(current_status, :BUSY), current_status}
+    {:reply, current_status.busy, current_status}
   end
 
   def handle_call(:get_controller_version, _from, current_status) do
-    {:reply, Map.get(current_status, :VERSION), current_status }
+    {:reply, current_status.version, current_status }
   end
 
-  def handle_call({:get_pin, pin}, _from, status) do
-    all_pins = Map.get(status, :PINS)
-    got_pin = Map.get(all_pins, "pin#{pin}")
-    {:reply, got_pin, status}
+  def handle_call({:get_pin, pin}, _from, current_status) when is_bitstring(pin) do
+    pin = Map.get(current_status, "pin"<>pin, -1)
+    {:reply, pin, current_status}
   end
 
-  def handle_cast({:set_pin, pin, value}, current_status)  do
-    current_pin_status = Map.get(current_status, :PINS)
-    new_pin_status = Map.put(current_pin_status, pin, value)
-    {:noreply, Map.update(current_status, :PINS, new_pin_status, fn _x -> new_pin_status end)}
+  def handle_cast({:set_pin, pin, value}, current_status) when is_bitstring(pin) and is_integer(value) do
+    {:noreply, Map.put(current_status, "pin"<>pin, value)}
   end
 
-  def handle_cast({:set_param, param, value}, current_status) do
-    current_params = Map.get(current_status, :PARAMS)
-    new_params = Map.put(current_params, param, value)
-    {:noreply, Map.update(current_status, :PARAMS, new_params, fn _x -> new_params end)}
+  def handle_cast({:set_param, param, value}, current_status) when is_bitstring(param) do
+    {:noreply, Map.put(current_status, param, value)}
   end
 
   def handle_cast({:set_busy, b}, current_status ) when is_boolean b do
-      # if b != Map.get(current_status, :BUSY) do Logger.debug("busy: #{inspect b}") end
-    {:noreply, Map.update(current_status, :BUSY, b, fn _x ->  b end)}
+    {:noreply, Map.put(current_status, :busy, b)}
   end
 
-  def handle_cast({:set_last, last}, current_status) do
-    {:noreply,Map.update(current_status, :LAST, "", fn _x -> last end) }
-  end
-
-  def handle_cast({:set_pos, x,y,z}, current_status) do
-    new_status = Map.update(current_status, :X, 0, fn _x -> x end) |>
-                 Map.update(:Y, 0, fn _y -> y end) |>
-                 Map.update(:Z, 0, fn _z -> z end)
-   {:noreply,new_status}
+  def handle_cast({:set_pos, x,y,z}, current_status)
+  when is_integer x and
+       is_integer y and
+       is_integer z do
+   new_status = Map.put(current_status, :x, x)
+   |> Map.put(:y, y)
+   |> Map.put(:z, z)
+   {:noreply, new_status}
   end
 
   def handle_cast({:set_end_stop, _stop, _value}, current_status) do
@@ -74,20 +67,17 @@ defmodule BotStatus do
   end
 
   # Sets the pin value in the bot's status
-  def set_pin(pin, value) when is_integer pin do
-    case value do
-      0 -> GenServer.cast(__MODULE__, {:set_pin, "pin"<>Integer.to_string(pin), :off})
-      _ -> GenServer.cast(__MODULE__, {:set_pin, "pin"<>Integer.to_string(pin), :on})
-    end
+  def set_pin(pin, value) when is_integer pin and is_integer value do
+    GenServer.cast(__MODULE__, {:set_pin, Integer.to_string(pin), value})
   end
 
   def set_param(param, value) when is_bitstring param do
-    GenServer.cast(__MODULE__, {:set_pin, param, value})
+    GenServer.cast(__MODULE__, {:set_param, param, value})
   end
 
   # Gets the pin value from the bot's status
   def get_pin(pin) when is_integer pin do
-    GenServer.call(__MODULE__, {:get_pin, pin})
+    GenServer.call(__MODULE__, {:get_pin, Integer.to_string(pin)})
   end
 
   # Sets busy to true or false.
@@ -98,10 +88,6 @@ defmodule BotStatus do
   # Gets busy
   def busy? do
     GenServer.call(__MODULE__, {:get_busy})
-  end
-
-  def set_last(last) do
-    GenServer.cast(__MODULE__, {:set_last, last })
   end
 
   # All three coords
@@ -136,7 +122,9 @@ defmodule BotStatus do
 
   # Get current coords
   def get_current_pos do
-    [:X,:Y,:Z] |> Enum.map(fn(v) ->  Map.get(get_status, v) end)
+    Enum.map([:x,:y,:z], fn(coord) ->
+      Map.get(get_status, coord)
+    end)
   end
 
   def get_current_version do

@@ -25,8 +25,8 @@ defmodule Sequence do
     {:reply, steps, %{}}
   end
 
-  def handle_call({:execute, id}, _from, steps) do
-    Command.read_status(id)
+  def handle_call({:execute, _id}, _from, steps) do
+    Command.read_status
     Logger.debug("#{inspect steps}")
     ordered_steps = Enum.sort(steps)
     ordered_list = Enum.map(ordered_steps, fn({_pos, step}) -> step end)
@@ -42,13 +42,13 @@ defmodule Sequence do
   # Pattern match available commands
   def add_step(step,id \\ nil)
   def add_step(%{"command" => command, "message_type" => "move_absolute",
-                "position" => position}, id) do
+                "position" => position}, _id) do
     #TODO: i think this would allow negative numbers
     xpos = String.to_integer(Map.get(command, "x", nil))
     ypos = String.to_integer(Map.get(command, "y", nil))
     zpos = String.to_integer(Map.get(command, "z", nil))
     speed = String.to_integer(Map.get(command, "speed", nil))
-    GenServer.cast(__MODULE__, {:add_step, {position, fn -> Command.move_absolute(xpos,ypos,zpos,speed, id) end}})
+    GenServer.cast(__MODULE__, {:add_step, {position, fn -> Command.move_absolute(xpos,ypos,zpos,speed) end}})
   end
 
   def add_step(%{"command" => %{"speed" => speed,
@@ -62,9 +62,9 @@ defmodule Sequence do
   end
 
   # Write pin (MODE IS NOT WORKING?)
-  def add_step(%{"command" => %{"mode" => _mode, "pin" => pin, "value" => value}, "message_type" => "pin_write", "position" => position}, id) do
+  def add_step(%{"command" => %{"mode" => _mode, "pin" => pin, "value" => value}, "message_type" => "pin_write", "position" => position}, _id) do
     GenServer.cast(__MODULE__,
-      {:add_step, {position, fn -> Command.write_pin(String.to_integer(pin), String.to_integer(value),0, id) end}})
+      {:add_step, {position, fn -> Command.write_pin(String.to_integer(pin), String.to_integer(value),0) end}})
   end
 
   # Process.sleep seems to be off by a couple seconds?

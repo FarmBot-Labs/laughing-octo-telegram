@@ -39,9 +39,9 @@ defmodule BotCommandHandler do
     GenServer.call(__MODULE__, :e_stop, 5000)
   end
 
-  # Gets current events.
-  # acts upon them one by one
-  # and gets more events
+  @doc """
+    Gets events from the GenEvent server (pid)
+  """
   def get_events(pid) do
     events = GenEvent.call(pid, BotCommandManager, :events)
     for event <- events do
@@ -64,6 +64,17 @@ defmodule BotCommandHandler do
   def notify(event) do
     GenServer.cast(__MODULE__, {:add_event, event})
   end
+
+  ###
+  ## This might not be the best implementation.
+  ## PROBLEM: There is a small chance for the bot to be out of sync from the
+  ##          Arduino.
+  ##
+  ## EXAMPLE: If Farmbot recieves a command and sends it properly over UART
+  ##          but the Arduino decides for any reason to not accept that command,
+  ##          Farmbot and the frontend think the bot is at one position
+  ##          and the actual bot is at a different position.
+  ###
 
   defp do_handle({:home_x, {speed}}) do
     Logger.info("HOME X")
@@ -92,13 +103,11 @@ defmodule BotCommandHandler do
   end
 
   defp do_handle({method, params}) do
-    Command.log("Unhandled method: #{inspect method} with params: #{inspect params}")
     Logger.debug("Unhandled method: #{inspect method} with params: #{inspect params}")
   end
 
   # Unhandled event. Probably not implemented if it got this far.
   defp do_handle(event) do
-    Command.log("[Command Handler] (Probably not implemented) Unhandled Event: #{inspect event}")
     Logger.debug("[Command Handler] (Probably not implemented) Unhandled Event: #{inspect event}")
   end
 end

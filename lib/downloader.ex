@@ -1,9 +1,7 @@
 defmodule Downloader do
 
   def download_and_install_update(url) do
-    Command.log("Downloading upgrade!")
     run(url, "/tmp/update.fw") |> Nerves.Firmware.upgrade_and_finalize
-    Command.log("Going Down for upgrade!")
     Nerves.Firmware.reboot
   end
 

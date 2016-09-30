@@ -1,4 +1,7 @@
 defmodule BotCommandSupervisor do
+  @moduledoc """
+    Supervises Bot Commands
+  """
   def start_link(_) do
     import Supervisor.Spec
     children = [

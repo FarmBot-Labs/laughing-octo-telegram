@@ -44,7 +44,7 @@ defmodule Wifi do
   end
 
   defp start_hostapd_deps(_) do
-    Logger.debug("HOSTAPD STUB")
+    nil
   end
 
   defp start_hostapd(:prod) do
@@ -52,7 +52,7 @@ defmodule Wifi do
   end
 
   defp start_hostapd(_) do
-    Logger.debug("HOSTAPD STUB")
+    nil
   end
 
   defp print_cmd_result({_message, 0}) do
@@ -92,7 +92,6 @@ defmodule Wifi do
   end
 
   def handle_cast({:connect, ssid, pass}, {:wpa, connected: _con}) do
-    Logger.debug("connecting to #{{ssid, pass}}")
     start_wifi_client(ssid, pass)
     {:noreply,{ssid, pass, connected: false}}
   end

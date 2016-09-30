@@ -1,60 +1,54 @@
 defmodule Command do
   require Logger
   @moduledoc """
-    false
+    BotCommands.
   """
 
   @doc """
     EMERGENCY STOP
   """
-  def e_stop(id \\ nil) do
+  def e_stop do
     UartHandler.send("E")
-    BotStatus.set_pos(:unknown, :unknown, :unknown)
-    Command.read_status(id, "emergency_stop")
     Process.exit(Process.whereis(BotCommandHandler), :kill)
   end
 
   @doc """
-    Home All
+    Home All (TODO: this might be broken)
   """
-  def home_all(speed, id \\ nil) do
+  def home_all(speed) do
     Logger.info("HOME ALL")
     # SerialMessageManager.sync_notify( {:send, "G28"} )
-    Command.move_absolute(0, 0, 0, speed, id)
+    Command.move_absolute(0, 0, 0, speed)
   end
 
   @doc """
     Home x
     I dont think anything uses these.
   """
-  def home_x(speed,id \\ nil) do
+  def home_x(speed) do
     BotCommandHandler.notify({:home_x, speed})
-    Command.read_status(id)
   end
 
   @doc """
     Home y
   """
-  def home_y(speed,id \\ nil) do
+  def home_y(speed) do
     BotCommandHandler.notify({:home_y, speed})
-    Command.read_status(id)
   end
 
   @doc """
     Home z
   """
-  def home_z(speed,id \\ nil) do
+  def home_z(speed) do
     BotCommandHandler.notify({:home_z, speed})
-    Command.read_status(id)
   end
 
   @doc """
     Writes a pin high or low
   """
-  def write_pin(pin, value, mode \\ "1", id \\ nil)
-  def write_pin(pin, value, mode, id) do
+  def write_pin(pin, value, mode \\ "1")
+  def write_pin(pin, value, mode) do
     BotStatus.set_pin(pin, value)
-    Command.read_status(id, "single_command")
     BotCommandHandler.notify({:write_pin, {pin, value, mode}})
   end
 
@@ -64,31 +58,27 @@ defmodule Command do
     replies to the mqtt message that caused it (if one exists)
     adds the move to the command queue.
   """
-  def move_absolute(x \\ 0,y \\ 0,z \\ 0,s \\ 100, id \\ nil)
-  def move_absolute(x, y, z, s, id) when x >= 0 and y >= 0 do
+  def move_absolute(x \\ 0,y \\ 0,z \\ 0,s \\ 100)
+  def move_absolute(x, y, z, s) when x >= 0 and y >= 0 do
     BotStatus.set_pos(x,y,z)
-    Command.read_status(id, "single_command")
     BotCommandHandler.notify({:move_absolute, {x,y,z,s}})
   end
 
   # When both x and y are negative
-  def move_absolute(x, y, z, s,id ) when x < 0 and y < 0 do
+  def move_absolute(x, y, z, s) when x < 0 and y < 0 do
     BotStatus.set_pos(0,0,z)
-    Command.read_status(id, "single_command")
     BotCommandHandler.notify({:move_absolute, {0,0,z,s}})
   end
 
   # when x is negative
-  def move_absolute(x, y, z, s,id ) when x < 0 do
+  def move_absolute(x, y, z, s) when x < 0 do
     BotStatus.set_pos(0,y,z)
-    Command.read_status(id, "single_command")
     BotCommandHandler.notify({:move_absolute, {0,y,z,s}})
   end
 
   # when y is negative
-  def move_absolute(x, y, z, s, id ) when y < 0 do
+  def move_absolute(x, y, z, s ) when y < 0 do
     BotStatus.set_pos(x,0,z)
-    Command.read_status(id, "single_command")
     BotCommandHandler.notify({:move_absolute, {x,0,z,s}})
   end
 
@@ -96,33 +86,31 @@ defmodule Command do
     Gets the current position
     then pipes into move_absolute
   """
-  def move_relative(e, id \\ nil)
-  def move_relative({:x, s, move_by}, id) when is_integer move_by do
+  def move_relative(e)
+  def move_relative({:x, s, move_by}) when is_integer move_by do
     [x,y,z] = BotStatus.get_current_pos
-    Logger.debug("#{inspect [x,y,z]}")
-
-    move_absolute(x + move_by,y,z,s,id)
+    move_absolute(x + move_by,y,z,s)
   end
 
-  def move_relative({:y, s, move_by}, id) when is_integer move_by do
+  def move_relative({:y, s, move_by}) when is_integer move_by do
     [x,y,z] = BotStatus.get_current_pos
-    move_absolute(x,y + move_by,z,s,id)
+    move_absolute(x,y + move_by,z,s)
   end
 
-  def move_relative({:z, s, move_by}, id) when is_integer move_by do
+  def move_relative({:z, s, move_by}) when is_integer move_by do
     [x,y,z] = BotStatus.get_current_pos
-    move_absolute(x,y,z + move_by,s,id)
+    move_absolute(x,y,z + move_by,s)
   end
 
-  def move_relative(%{x: x_move_by, y: y_move_by, z: z_move_by, speed: speed}, id)
+  # This is a funky one. Only used in sequences right now.
+  def move_relative(%{x: x_move_by, y: y_move_by, z: z_move_by, speed: speed})
   when is_integer x_move_by and
        is_integer y_move_by and
        is_integer z_move_by
-       do
-         Logger.debug("MOVE X BY: #{inspect x_move_by}")
-    move_relative({:x, speed, x_move_by}, id)
-    move_relative({:y, speed, y_move_by}, id)
-    move_relative({:z, speed, z_move_by}, id)
+  do
+    move_relative({:x, speed, x_move_by})
+    move_relative({:y, speed, y_move_by})
+    move_relative({:z, speed, z_move_by})
   end
 
   @doc """
@@ -146,66 +134,29 @@ defmodule Command do
 
   @doc """
     Reads a pin value.
-    mode: 1 = analog.
-    mode: 0 = digital.
+    mode: 1 = digital.
+    mode: 0 = analog.
   """
-  def read_pin(pin, mode \\ 0) do
+  def read_pin(pin, mode \\ 1) do
     SerialMessageManager.sync_notify({:send, "F42 P#{pin} M#{mode}" })
   end
 
   @doc """
     Reads a param. Needs the integer version of said param.
   """
-  def read_param(param, id \\nil) when is_integer param do
+  def read_param(param) when is_integer param do
     SerialMessageManager.sync_notify({:send, "F21 P#{param}" })
-    id
   end
 
   # I don't have this one read_status at the end because if mqtt not connected
   # it would crash on every boot, until mqtt connects and it is just ugly,
   # So i only read_status from the mqtt message handler.
-  def update_param(param, value, id \\nil)
-  def update_param(param, value, id) when is_integer param do
-    Logger.debug(value)
+  def update_param(param, value) when is_integer param do
     SerialMessageManager.sync_notify({:send, "F22 P#{param} V#{value}"})
     Command.read_param(param)
-    id
   end
 
-  @doc """
-    This should really renamed to rpc_builder or something.
-  """
-  def read_status(id \\ nil, method \\ "read_status")
-  def read_status(id, method) do
-    current_status = BotStatus.get_status
-    [x,y,z] = BotStatus.get_current_pos
-    results = Map.merge(%{
-      busy: 0,
-      last: Map.get(current_status, :LAST),
-      method: method,
-      s: Map.get(current_status, :S),
-      x: x,
-      y: y,
-      z: z}, Map.get(current_status, :PARAMS)) |> Map.merge(Map.get(current_status, :PINS))
-
-    message = %{error: nil,
-                id: id,
-                result: results}
-    MqttHandler.emit( Poison.encode!(message) )
-  end
-
-  @doc """
-    Logs a message to the frontend
-    The double posting is a problem in Frontend or Farmbot-JS
-  """
-  def log(message, priority \\ "low" ) when is_bitstring message do
-    [x,y,z] = BotStatus.get_current_pos
-    m = %{id: nil,
-          result: %{ name: "log_message",
-                     priority: priority,
-                     data: message,
-                     status: %{X: x, Y: y, Z: z},
-                     time: :os.system_time(:seconds) }}
-    MqttHandler.log( Poison.encode!(m) )
+  def read_status do
+    BotStatus.get_status
   end
 end

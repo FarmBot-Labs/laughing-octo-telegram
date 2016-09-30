@@ -104,6 +104,7 @@ defmodule GcodeMessageHandler do
     position
     |> String.split(" ")
     |> parse_coords
+  end
   def parse_coords(["X" <> x,"Y" <> y, "Z" <> z]) do
     [x,y,z]
     |> Enum.map(&String.to_integer/1)
@@ -121,7 +122,9 @@ defmodule GcodeMessageHandler do
     |> String.split(" ")
     |> parse_stop_values
   end
-  def parse_stop_values(["XA"<>xa, "XB"<>xb, "YA"<>ya, "YB"<>yb, "ZA"<>za, "ZB"<>zb]) do
+  def parse_stop_values(["XA"<>xa, "XB"<>xb,
+                         "YA"<>ya, "YB"<>yb,
+                         "ZA"<>za, "ZB"<>zb]) do
     [
       {"XA", xa}, {"XB", xb},
       {"YA", ya}, {"YB", yb},

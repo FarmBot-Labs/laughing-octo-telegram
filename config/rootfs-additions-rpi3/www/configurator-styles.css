@@ -1,3 +1,7 @@
+html {
+  height: 100%;
+}
+
 body {
   background: linear-gradient(-135deg, #089460, #159ACC);
   margin: 0;
@@ -43,6 +47,7 @@ input {
   border: none;
   border-radius: 2px;
   margin-bottom: 10px;
+  width: 100%;
 }
 
 .btn {

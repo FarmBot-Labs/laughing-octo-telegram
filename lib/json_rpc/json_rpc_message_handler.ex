@@ -39,7 +39,7 @@ defmodule RPCMessageHandler do
     Poison.encode!(
       %{ id: nil,
          method: "log_message",
-         params:[%{status: BotStatus.get_status,
+         params: [%{status: BotStatus.get_status,
                    time: :os.system_time(:seconds),
                    message: message}] })
   end

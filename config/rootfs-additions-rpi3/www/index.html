@@ -7,31 +7,25 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Welcom to Configurator</title>
-    <link rel="stylesheet" href="bootstrap-3.3.7-dist/css/bootstrap.css">
+    <title>Welcome to Configurator</title>
   </head>
 
   <body ng-controller="PhoneListController">
     <div class="container">
-      <header class="header"></header>
-
-      <span> <h1>Configure Your Farmbot <small>Some tagline or group of buzzwords</small></h1> </span>
+      <h1>Configure Your Farmbot</h1>
+      <h2>Enter your Wi-Fi and FarmBot Web App credentials</h2>
       <div class="jumbotron">
+
           <!-- wifi -->
-          <div class="input-group input-group-lg">
-              <span class="input-group-addon" id="sizing-addon1"><strong> Wireless Configuration </strong></span>
-
+          <div class="configuration-group">
+              <h3 class="input-group-addon" id="sizing-addon1">Wi-Fi</h3>
               <div class="input-group input-group-lg">
-                <input id="wifissid" type="text"
-                    class="form-control" placeholder="Wireless SSID"
-                    aria-describedby="sizing-addon1" required="required">
-                <div class="input-group-btn input-group-btn-lg">
 
+                <!-- /btn-group -->
+                <input id="wifissid" type="text" class="form-control" placeholder="Wireless SSID" aria-describedby="sizing-addon1" required="required">
+                <div class="input-group-btn input-group-btn-lg">
                   <!-- Scan button  -->
-                  <button type="button" class="btn btn-default dropdown-toggle"
-                      data-toggle="dropdown"
-                      aria-haspopup="true"
-                      aria-expanded="false">
+                  <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                       Scan for Networks
                     <span class="caret"></span>
                   </button>
@@ -39,29 +33,29 @@
                     <li ng-repeat=" ssid in ssids "><a href="#" ng-click="select_ssid(ssid)"> {{ssid}} </a></li>
                   </ul>
                   <!-- Scan button  -->
-
-                </div><!-- /btn-group -->
-
-              </div><!-- /input-group -->
+                </div>
+              </div>
+              <!-- /input-group -->
 
             <input id="wifipsk" type="password" class="form-control" placeholder="Wireless PSK" aria-describedby="sizing-addon1" required="required">
           </div>
+          <!-- /wifi -->
 
           <!-- farmbot  config-->
-          <div class="input-group input-group-lg">
-            <span class="input-group-addon" id="sizing-addon1"><strong>  Farmbot Configuration</strong></span>
-            <input id=fbemail type="email" class="form-control" placeholder="Farmbot Username" aria-describedby="sizing-addon1" required="required">
-            <input id=fbpwd type="password" class="form-control" placeholder="Farmbot Password" aria-describedby="sizing-addon1" required="required">
-            <input id=fbserver type="url"value="http://192.168.29.154:3000" class="form-control" placeholder="Farmbot Server" aria-describedby="sizing-addon1" required="required">
+          <div class="configuration-group">
+            <h3 class="input-group-addon" id="sizing-addon1">Web App</h3>
+            <input id="fbemail" type="email" class="form-control" placeholder="Username" aria-describedby="sizing-addon1" required="required">
+            <input id="fbpwd" type="password" class="form-control" placeholder="Password" aria-describedby="sizing-addon1" required="required">
+            <input id="fbserver" type="url" value="my.farmbot.io" placeholder="my.farmbot.io" class="form-control" aria-describedby="sizing-addon1" required="required">
+            <input id="fbport" type="integer" value="80" placeholder="80" class="form-control" aria-describedby="sizing-addon1" required="required">
           </div>
-          <!-- farmbot  config-->
-          <a href="#" ng-click="submit()" class="btn btn-lg form-control"> <strong> Configure </strong> </a>
-      </div>
+          <!-- /farmbot  config-->
 
+          <a href="#" ng-click="submit()" class="btn btn-lg form-control save-button"> <strong>Save Configuration</strong> </a>
+      </div>
 
     </div> <!-- /container -->
     <script src="jquery-3.1.0.min.js"></script>
-    <script src="bootstrap-3.3.7-dist/js/bootstrap.js"></script>
     <script src="angular.min.js"></script>
     <script src="app/app.js"></script>
 

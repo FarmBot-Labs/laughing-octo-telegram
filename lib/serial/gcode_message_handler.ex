@@ -46,22 +46,15 @@ defmodule GcodeMessageHandler do
   end
 
   # TODO report end stops
-  def do_handle({:gcode, {:reporting_end_stops, params }}) do
-    # Logger.debug("[gcode_handler] {:reporting_end_stops} stub: #{params}")
-    # "XA0 XB0 YA0 YB0 ZA0 ZB0"
-    stop_values = String.split(params, " ")
-    # ["XA0", "XB0", "YA0", "YB0", "ZA0", "ZB0"]
-    Enum.map(stop_values, fn param -> String.split_at(param, 2) end) |>
-    # [{"XA", "0"}, {"XB", "0"}, {"YA", "0"}, {"YB", "0"}, {"ZA", "0"}, {"ZB", "0"}]
-    Enum.each(fn es -> BotStatus.set_end_stop(es) end)
+  def do_handle({:gcode, {:reporting_end_stops, stop_values }}) do
+    # Logger.debug("[gcode_handler] {:reporting_end_stops} stub: #{stop_values}")
+    stop_values
+    |> parse_stop_values
+    |> Enum.each(&BotStatus.set_end_stop/1)
   end
 
-  # This needs more pattern matching. something like:
-  # "X34 Y756 Z23" = "X" <> x " Y" <> y <> " Z"<>z
   def do_handle({:gcode, { :report_current_position, position }}) do
-    # This is dirty as hell lol
-    [x,y,z] = String.split(position, " ") |> Enum.map(fn(v) -> String.split(v, String.first(v)) end) # [["", "123"], ["", "345"], ["", "-445"]]
-                                          |> Enum.map(fn(f) -> String.to_integer(List.last(f))  end) # [123, 345, -445]
+    [x, y, z] = parse_coords(position)
     BotStatus.set_pos(x,y,z)
   end
 
@@ -70,8 +63,11 @@ defmodule GcodeMessageHandler do
     [_, real_p] = String.split(p, "P")
     [_, real_v] = String.split(v, "V")
     Logger.debug("Param: #{real_p}, Value: #{real_v}")
-    String.Casing.downcase(Atom.to_string(Gcode.parse_param(real_p) )) |>
-    BotStatus.set_param(real_v)
+    real_p
+    |> Gcode.parse_param
+    |> Atom.to_string
+    |> String.downcase
+    |> BotStatus.set_param(real_v)
   end
 
   def do_handle({:gcode, {:busy}}) do
@@ -98,4 +94,39 @@ defmodule GcodeMessageHandler do
     Command.log("Unhandled or broken gcode: #{message}")
     Logger.debug("[gcode_handler] Unhandled Serial Gcode: #{inspect message}")
   end
+
+  @doc """
+  Example:
+    iex> GcodeMessageHandler.parse_coords("X34 Y756 Z23")
+    [34, 756, 23]
+  """
+  def parse_coords(position) when position |> is_binary do
+    position
+    |> String.split(" ")
+    |> parse_coords
+  def parse_coords(["X" <> x,"Y" <> y, "Z" <> z]) do
+    [x,y,z]
+    |> Enum.map(&String.to_integer/1)
+  end
+
+
+  @doc """
+  Example:
+    iex> GcodeMessageHandler.parse_stop_values("XA0 XB0 YA0 YB0 ZA0 ZB0")
+    [{"XA", "0"}, {"XB", "0"}, {"YA", "0"}, {"YB", "0"}, {"ZA", "0"}, {"ZB", "0"}]
+  """
+  def parse_stop_values(stop_values) when stop_values |> is_binary do
+    # same thing here as parse_coords
+    stop_values
+    |> String.split(" ")
+    |> parse_stop_values
+  end
+  def parse_stop_values(["XA"<>xa, "XB"<>xb, "YA"<>ya, "YB"<>yb, "ZA"<>za, "ZB"<>zb]) do
+    [
+      {"XA", xa}, {"XB", xb},
+      {"YA", ya}, {"YB", yb},
+      {"ZA", za}, {"ZB", zb},
+    ]
+  end
+
 end

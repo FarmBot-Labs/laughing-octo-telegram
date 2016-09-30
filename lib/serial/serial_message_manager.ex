@@ -27,9 +27,10 @@ defmodule SerialMessageManager do
 
   # This is some copy paste magic, not touching it.
   defp dispatch_events(queue, demand, events) do
-    with d when d > 0 <- demand,
-         {{:value, {from, event}}, queue} <- :queue.out(queue) do
-      GenStage.reply(from, :ok)
+    with d when d > 0                     <- demand,
+         {{:value, {from, event}}, queue} <- :queue.out(queue),
+         _                                <- GenStage.reply(from, :ok)
+    do
       dispatch_events(queue, demand - 1, [event | events])
     else
       _ -> {:noreply, Enum.reverse(events), {queue, demand}}

@@ -116,7 +116,7 @@ defmodule BotStatus do
   # If we only have one coord, get the current pos of the others first.
   def set_pos({:x, x}) when is_integer(x) do
     [_x,y,z] = get_current_pos
-    set_pos(x,y,z )
+    set_pos(x,y,z)
   end
 
   def set_pos({:y, y}) when is_integer(y) do
@@ -126,7 +126,7 @@ defmodule BotStatus do
 
   def set_pos({:z, z}) when is_integer(z) do
     [x,y,_z] = get_current_pos
-    set_pos(x,y,z )
+    set_pos(x,y,z)
   end
 
   def set_end_stop({stop, value}) do

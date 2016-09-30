@@ -2,11 +2,6 @@ ExUnit.start
 defmodule BotStatusTest do
   use ExUnit.Case, async: true
 
-  setup do
-    {:ok, genserver_pid} = BotStatus.start_link(:normal)
-    {:ok, process: genserver_pid}
-end
-
   test "gets the current status" do
     {:ok, status} = BotStatus.init(:hello)
     {:reply, current_status, current_status} = BotStatus.handle_call({:get_status}, self(), status)

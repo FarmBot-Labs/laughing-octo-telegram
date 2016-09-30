@@ -61,6 +61,7 @@ defmodule Auth do
   end
 
   # Infinite recursion until we have a token.
+  # Not concerned about performance yet because the bot can't do anything yet.
   def fetch_token do
     case Auth.get_token do
       nil -> fetch_token

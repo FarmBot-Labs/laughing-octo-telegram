@@ -2,7 +2,7 @@ alias Experimental.{GenStage}
 defmodule RPCMessageHandler do
   use GenStage
   require Logger
-  @transport MqttHandler
+  @transport Application.get_env(:json_rpc, :transport)
 
   @doc """
     This is where all JSON RPC messages come in.
@@ -10,7 +10,7 @@ defmodule RPCMessageHandler do
     Right now we set @transport to MqttHandler, but it could technically be
     In config and set to anything that can emit and recieve JSON RPC messages.
   """
-  
+
   def start_link() do
     GenStage.start_link(__MODULE__, :ok)
   end

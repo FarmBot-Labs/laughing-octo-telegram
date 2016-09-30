@@ -4,3 +4,6 @@ config :uart,
 
 config :fb,
   ro_path: "/tmp"
+
+config :json_rpc,
+  transport: MqttHandler

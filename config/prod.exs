@@ -8,3 +8,6 @@ config :uart,
 
 config :fb,
   ro_path: "/root"
+
+config :json_rpc
+    transport: MqttHandler

@@ -33,7 +33,7 @@ defmodule MqttHandler do
   end
 
   def init(_args) do
-    Mqtt.Client.start_link(%{parent: MqttHandler})
+    Mqtt.Client.start_link(%{parent: __MODULE__})
   end
 
   def start_link(args) do

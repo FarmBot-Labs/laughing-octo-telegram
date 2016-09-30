@@ -56,6 +56,10 @@ defmodule RPCMessageHandler do
     end
   end
 
+  def handle_rpc(_broken_rpc) do
+    nil
+  end
+
   # E STOP
   def do_handle("emergency_stop", _) do
     Command.e_stop

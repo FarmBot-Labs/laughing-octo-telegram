@@ -1,5 +1,3 @@
-## Start the Elixir shell
--name farmbot@192.168.29.233
 -setcookie democookie
 -noshell
 -user Elixir.IEx.CLI

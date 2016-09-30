@@ -3,13 +3,7 @@ defmodule MqttHandler do
   require Logger
 
   defp build_last_will_message()do
-    m = %{id: nil,
-          result: %{ name: "log_message",
-                     priority: "low",
-                     data: "Something Bad happened. Bot going Offline.",
-                     status: %{X: nil, Y: nil, Z: nil},
-                     time: -5300208000 }}
-   Poison.encode!(m)
+    RPCMessageHandler.log("Something Bad Happened. Bot going offline.")
   end
 
   @doc """

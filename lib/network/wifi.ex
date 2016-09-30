@@ -15,6 +15,7 @@ defmodule Wifi do
   end
 
   def init(_args) do
+    System.cmd("epmd", ["-daemon"])
     GenEvent.add_handler(Nerves.NetworkInterface.event_manager(), Network.EventManager, [])
     initial_state = load
     case initial_state do

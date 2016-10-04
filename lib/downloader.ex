@@ -1,7 +1,9 @@
 defmodule Downloader do
 
   def download_and_install_update(url) do
+    RPCMessageHandler.log("Downloading an Update!")
     run(url, "/tmp/update.fw") |> Nerves.Firmware.upgrade_and_finalize
+    RPCMessageHandler.log("Going down for update. See you soon!")
     Nerves.Firmware.reboot
   end
 

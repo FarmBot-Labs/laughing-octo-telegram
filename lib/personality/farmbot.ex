@@ -30,12 +30,11 @@ defmodule Farmbot do
     {:reply, state, state}
   end
 
-  def handle_call({:update_personality, new_personality_map}, _from, old_personality_map) do
+  def handle_call({:update_personality, new_personality_map}, _from, _old_personality_map) do
     {:reply, :ok, new_personality_map}
   end
 
   def handle_info(:emit_message,personality_map) do
-    
     {:noreply, personality_map}
   end
 end

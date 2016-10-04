@@ -3,7 +3,7 @@ defmodule RPCMessageHandler do
   use GenStage
   require Logger
   @transport Application.get_env(:json_rpc, :transport)
-
+  @update_server Application.get_env(:fb, :update_server)
   @doc """
     This is where all JSON RPC messages come in.
     Currently only from Mqtt, but is technically transport agnostic.
@@ -54,6 +54,7 @@ defmodule RPCMessageHandler do
   end
 
   def personality_msg(message) when is_bitstring(message) do
+      Poison.encode!(
       %{ id: nil,
          method: "personality_message",
          params: [%{message: message}] })
@@ -154,13 +155,32 @@ defmodule RPCMessageHandler do
     send_status
   end
 
-  def do_handle("force_get_update", [%{"url" => url}]) when is_bitstring(url) do
-    spawn fn -> Downloader.download_and_install_update(url) end
-    :ok
+  def do_handle("check_updates", _) do
+    resp = HTTPotion.get(@update_server<>"/version.json")
+    current_version = Fw.version
+    case resp do
+      %HTTPotion.ErrorResponse{message: error} ->
+        {:error, "Check Updates failed", error}
+      _ ->
+        json = Poison.decode!(resp.body)
+        new_version = Map.get(json, "latest") |> Map.get("version")
+        new_version_url = Map.get(json, "latest") |> Map.get("url")
+        if(new_version != current_version) do
+          spawn fn -> Downloader.download_and_install_update(new_version_url) end
+        end
+        :ok
+    end
   end
 
-  def do_handle("force_get_update", _) do
-    {:error, "BAD_PARAMS", Poison.encode!(%{"url" => "string"})}
+  def do_handle("reboot", _ ) do
+    log("Bot Going down for reboot.")
+    Nerves.Firmware.reboot
+    log("Something Weird happened...")
+  end
+
+  def do_handle("power_off", _ ) do
+    log("Bot Going down. Pls remeber me.")
+    Nerves.Firmware.poweroff
   end
 
 #  "{\"update_calibration\", [%{\"movement_home_up_y\" => 0}]}"}
@@ -188,6 +208,9 @@ defmodule RPCMessageHandler do
     @transport.emit(log_msg(message))
   end
 
+  @doc """
+    Shortcut for a personality message
+  """
   def pm(message) when is_bitstring(message) do
     @transport.emit(personality_msg(message))
   end

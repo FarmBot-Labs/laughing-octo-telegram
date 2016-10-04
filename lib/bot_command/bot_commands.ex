@@ -109,9 +109,8 @@ defmodule Command do
        is_integer y_move_by and
        is_integer z_move_by
   do
-    move_relative({:x, speed, x_move_by})
-    move_relative({:y, speed, y_move_by})
-    move_relative({:z, speed, z_move_by})
+    [x,y,z] = BotStatus.get_current_pos
+    move_absolute(x + x_move_by,y + y_move_by,z + z_move_by, speed)
   end
 
   @doc """
@@ -119,7 +118,7 @@ defmodule Command do
     Reads pins 0-13 in digital mode.
   """
   def read_all_pins do
-    spawn fn -> Enum.each(0..13, fn pin -> Command.read_pin(pin); Process.sleep 500 end) end
+    spawn fn -> Enum.each(0..13, fn pin -> Command.read_pin(pin) end) end
   end
 
     @doc """
@@ -130,7 +129,7 @@ defmodule Command do
     rel_params = [0,11,12,13,21,22,23,
                   31,32,33,41,42,43,51,
                   52,53,61,62,63,71,72,73]
-    spawn fn -> Enum.each(rel_params, fn param -> Command.read_param(param); Process.sleep(500) end ) end
+    spawn fn -> Enum.each(rel_params, fn param -> Command.read_param(param) end ) end
   end
 
   @doc """
@@ -138,24 +137,26 @@ defmodule Command do
     mode: 1 = digital.
     mode: 0 = analog.
   """
-  def read_pin(pin, mode \\ 1) do
-    SerialMessageManager.sync_notify({:send, "F42 P#{pin} M#{mode}" })
-    :ok
+  def read_pin(pin, mode \\ 0) do
+    BotCommandHandler.notify({:read_pin, {pin, mode} })
   end
 
   @doc """
     Reads a param. Needs the integer version of said param.
   """
   def read_param(param) when is_integer param do
-    SerialMessageManager.sync_notify({:send, "F21 P#{param}" })
-    :ok
+    BotCommandHandler.notify({:read_param, param })
   end
 
-  # I don't have this one read_status at the end because if mqtt not connected
-  # it would crash on every boot, until mqtt connects and it is just ugly,
-  # So i only read_status from the mqtt message handler.
+  @doc """
+    Update a param. Param needs to be an integer.
+  """
   def update_param(param, value) when is_integer param do
-    SerialMessageManager.sync_notify({:send, "F22 P#{param} V#{value}"})
+    BotCommandHandler.notify({:update_param, {param, value} })
     Command.read_param(param)
+  end
+
+  def update_param(nil, _value) do
+    {:error, "Unknown param"}
   end
 end

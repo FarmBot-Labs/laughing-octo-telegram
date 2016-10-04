@@ -49,6 +49,7 @@ defmodule BotCommandHandler do
       check_busy
       BotStatus.busy true
       do_handle(event)
+      Process.sleep(50)
       RPCMessageHandler.send_status
     end
     get_events(pid)
@@ -100,6 +101,21 @@ defmodule BotCommandHandler do
   defp do_handle({:move_absolute, {x,y,z,_s}}) do
     Logger.info("MOVE_ABSOLUTE " <> "G00 X#{x} Y#{y} Z#{z}")
     SerialMessageManager.sync_notify( {:send, "G00 X#{x} Y#{y} Z#{z}"} )
+  end
+
+  defp do_handle({:read_param, param}) do
+    Logger.info("READ_PARAM "<> "#{param}")
+    SerialMessageManager.sync_notify({:send, "F21 P#{param}" })
+  end
+
+  defp do_handle({:read_pin, {pin, mode}}) do
+    Logger.info("READ PIN "<> "#{pin}")
+    SerialMessageManager.sync_notify({:send, "F42 P#{pin} M#{mode}" })
+  end
+
+  defp do_handle({:update_param, {param, value}}) do
+    Logger.info("UPDATE PARAM " <> "#{param} #{value}")
+    SerialMessageManager.sync_notify({:send, "F22 P#{param} V#{value}"})
   end
 
   defp do_handle({method, params}) do

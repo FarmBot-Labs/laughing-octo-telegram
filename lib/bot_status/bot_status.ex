@@ -3,10 +3,10 @@ defmodule BotStatus do
   require Logger
   def init(_) do
     # MAKE SURE THE STATUS STAYS FLAT. YOU WILL THANK YOURSELF LATER.
-    initial_status = %{ x: 0,y: 0,z: 0,s: 10,
+    initial_status = %{ x: 0,y: 0,z: 0,speed: 10,
                         version: Fw.version,
                         busy: true,
-                        last_sync: "never",
+                        last_sync: -1,
                         movement_axis_nr_steps_x: 222,
                         movement_axis_nr_steps_y: 222,
                         movement_axis_nr_steps_z: 222 }
@@ -42,7 +42,10 @@ defmodule BotStatus do
     {:noreply, Map.put(current_status, "pin"<>pin, value)}
   end
 
-  def handle_cast({:set_param, param, value}, current_status) when is_bitstring(param) do
+  def handle_cast({:set_param, param, value}, current_status)
+    when is_bitstring(param) and
+         is_integer(value)
+    do
     {:noreply, Map.put(current_status, param, value)}
   end
 
@@ -71,8 +74,14 @@ defmodule BotStatus do
     GenServer.cast(__MODULE__, {:set_pin, Integer.to_string(pin), value})
   end
 
-  def set_param(param, value) when is_bitstring param do
+  def set_param(param, value) when is_bitstring(param)
+                                   and is_integer(value) do
     GenServer.cast(__MODULE__, {:set_param, param, value})
+  end
+
+  def set_param(param, value) when is_bitstring(param) 
+                                   and is_bitstring(value) do
+    set_param(param, String.to_integer(value))
   end
 
   # Gets the pin value from the bot's status
@@ -129,5 +138,14 @@ defmodule BotStatus do
 
   def get_current_version do
     GenServer.call(__MODULE__, :get_controller_version)
+  end
+
+  @doc """
+    Gets the current value of a param
+  """
+  def get_param(param) when is_integer(param) do
+    cur_status = BotStatus.get_status
+    this_param = Gcode.parse_param(param) |> Atom.to_string |> String.Casing.downcase
+    Map.get(cur_status, this_param)
   end
 end

@@ -1,5 +1,7 @@
 defmodule BotCommandManager do
   use GenEvent
+  require Logger
+
   def start_link() do
     GenEvent.start_link([])
   end
@@ -19,8 +21,4 @@ defmodule BotCommandManager do
     {:ok, Enum.reverse(events), []}
   end
 
-  def handle_call(:latest_event, events) do
-    event = Enum.reverse(events) |> List.first
-    {:ok, event, events -- [event]}
-  end
 end

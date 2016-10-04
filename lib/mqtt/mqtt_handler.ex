@@ -3,7 +3,7 @@ defmodule MqttHandler do
   require Logger
 
   defp build_last_will_message do
-    RPCMessageHandler.log_msg("Something Bad Happened. Bot going offline.")
+    RPCMessageHandler.log_msg("Something TERRIBLE Happened. Bot going offline.")
   end
 
   @doc """
@@ -20,7 +20,7 @@ defmodule MqttHandler do
                port: 1883,
                timeout: 5000,
                keep_alive: 500,
-               will_topic: "bot/#{bot}/rpc",
+               will_topic: "bot/#{bot}/from_device",
                will_message: build_last_will_message,
                will_qos: 0,
                will_retain: 0]
@@ -48,7 +48,7 @@ defmodule MqttHandler do
   end
 
   def handle_call({:connect_ack, _message}, from, client) do
-    options = [id: 24756, topics: ["bot/#{bot}/rpc"], qoses: [0]]
+    options = [id: 24756, topics: ["bot/#{bot}/from_clients"], qoses: [0]]
     spawn fn ->
       NetworkSupervisor.set_time # Should NOT be here
       Mqtt.Client.subscribe(client, options)
@@ -129,9 +129,9 @@ defmodule MqttHandler do
 
   def handle_call({:emit, message}, _from, client) when is_bitstring(message) do
     options = [ id: 1234,
-                topic: "bot/#{bot}/rpc",
+                topic: "bot/#{bot}/from_device",
                 message: message,
-                dup: 0, qos: 0, retain: 0]
+                dup: 1, qos: 1, retain: 0]
     spawn fn -> Mqtt.Client.publish(client, options) end
     {:reply, :ok, client}
   end

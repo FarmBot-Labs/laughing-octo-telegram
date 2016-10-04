@@ -53,6 +53,12 @@ defmodule RPCMessageHandler do
                     message: message}] })
   end
 
+  def personality_msg(message) when is_bitstring(message) do
+      %{ id: nil,
+         method: "personality_message",
+         params: [%{message: message}] })
+  end
+
   def handle_rpc(%{"method" => method, "params" => params, "id" => id})
   when is_list(params) and
        is_bitstring(method) and
@@ -180,6 +186,10 @@ defmodule RPCMessageHandler do
   """
   def log(message) when is_bitstring(message) do
     @transport.emit(log_msg(message))
+  end
+
+  def pm(message) when is_bitstring(message) do
+    @transport.emit(personality_msg(message))
   end
 
   def send_status do
